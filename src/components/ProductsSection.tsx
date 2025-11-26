@@ -51,7 +51,7 @@ export const ProductsSection = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="font-oswald text-4xl md:text-5xl font-bold text-foreground mb-6">
+          <h2 className="font-poppins text-4xl md:text-5xl font-black text-foreground mb-6">
             Qualidade de Fio a Fio
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

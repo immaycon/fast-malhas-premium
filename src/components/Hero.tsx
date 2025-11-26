@@ -26,7 +26,7 @@ export const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="font-oswald text-5xl md:text-7xl lg:text-8xl font-bold text-primary-foreground mb-6 tracking-tight">
+          <h1 className="font-poppins text-5xl md:text-7xl lg:text-8xl font-black text-primary-foreground mb-6 tracking-tight">
             FAST Malhas: Sua Fábrica<br />Têxtil Particular
           </h1>
           
@@ -46,7 +46,7 @@ export const Hero = () => {
             <Button 
               size="lg"
               onClick={handleWhatsAppClick}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-oswald text-lg px-8 py-6 h-auto shadow-premium transition-all duration-300 hover:scale-105"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold text-lg px-8 py-6 h-auto shadow-premium transition-all duration-300 hover:scale-105"
             >
               <MessageCircle className="mr-2 h-6 w-6" />
               FALE COM O GERENTE E FAÇA SEU PEDIDO

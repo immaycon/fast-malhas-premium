@@ -28,7 +28,7 @@ export const ProductCard = ({ name, description, specs, image, index }: ProductC
         </div>
         
         <CardContent className="p-8">
-          <h3 className="font-oswald text-2xl font-bold text-card-foreground mb-4">
+          <h3 className="font-poppins text-2xl font-bold text-card-foreground mb-4">
             {name}
           </h3>
           
@@ -37,7 +37,7 @@ export const ProductCard = ({ name, description, specs, image, index }: ProductC
           </p>
           
           <div className="bg-muted/50 p-6 rounded-lg border-l-4 border-accent">
-            <h4 className="font-oswald text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
+            <h4 className="font-poppins text-sm font-bold text-foreground mb-3 uppercase tracking-wide">
               Ficha Técnica
             </h4>
             <ul className="space-y-2">
