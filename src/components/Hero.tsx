@@ -27,7 +27,7 @@ export const Hero = () => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="font-poppins text-5xl md:text-7xl lg:text-8xl font-black text-primary-foreground mb-6 tracking-tight">
-            FAST Malhas: Sua Fábrica<br />Têxtil Particular
+            FAST Malhas:<br /> Sua Fábrica<br />Têxtil Particular
           </h1>
           
           <p className="font-sans text-xl md:text-2xl text-primary-foreground/90 mb-4 max-w-4xl mx-auto leading-relaxed">
