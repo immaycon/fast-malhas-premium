@@ -53,8 +53,8 @@ export default {
         "light-gray": "hsl(var(--light-gray))",
       },
       fontFamily: {
-        oswald: ["Oswald", "sans-serif"],
-        sans: ["Open Sans", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
+        sans: ["Inter", "sans-serif"],
       },
       backgroundImage: {
         "gradient-hero": "var(--gradient-hero)",

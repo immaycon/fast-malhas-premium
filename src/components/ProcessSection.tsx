@@ -35,7 +35,7 @@ export const ProcessSection = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="font-oswald text-4xl md:text-5xl font-bold text-foreground mb-6">
+          <h2 className="font-poppins text-4xl md:text-5xl font-black text-foreground mb-6">
             A Cadeia de Valor Otimizada
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -58,7 +58,7 @@ export const ProcessSection = () => {
                   <step.icon className="w-8 h-8 text-primary" />
                 </div>
                 
-                <h3 className="font-oswald text-xl font-bold text-card-foreground mb-3">
+                <h3 className="font-poppins text-xl font-bold text-card-foreground mb-3">
                   {step.title}
                 </h3>
                 
@@ -81,7 +81,7 @@ export const ProcessSection = () => {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="bg-gradient-accent p-8 rounded-lg text-center shadow-premium"
         >
-          <p className="font-oswald text-2xl font-bold text-accent-foreground">
+          <p className="font-poppins text-2xl font-bold text-accent-foreground">
             Reconhecida por qualidade Premium, entrega rápida e confiança inabalável
           </p>
         </motion.div>

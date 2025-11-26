@@ -21,7 +21,7 @@ export const ContactSection = () => {
           transition={{ duration: 0.5 }}
           className="text-center max-w-4xl mx-auto"
         >
-          <h2 className="font-oswald text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
+          <h2 className="font-poppins text-4xl md:text-5xl font-black text-primary-foreground mb-6">
             Fale com a Gerência e Inicie Sua Produção
           </h2>
           
@@ -38,7 +38,7 @@ export const ContactSection = () => {
           >
             <div className="flex items-center justify-center gap-3 mb-6">
               <Phone className="w-6 h-6 text-accent" />
-              <h3 className="font-oswald text-2xl font-bold text-primary-foreground">
+              <h3 className="font-poppins text-2xl font-bold text-primary-foreground">
                 Gerente de Contas
               </h3>
             </div>
@@ -46,7 +46,7 @@ export const ContactSection = () => {
             <Button
               size="lg"
               onClick={handleWhatsAppClick}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-oswald text-xl px-10 py-7 h-auto shadow-premium transition-all duration-300 hover:scale-105 w-full md:w-auto"
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold text-xl px-10 py-7 h-auto shadow-premium transition-all duration-300 hover:scale-105 w-full md:w-auto"
             >
               <MessageCircle className="mr-3 h-7 w-7" />
               (22) 99883-3821
