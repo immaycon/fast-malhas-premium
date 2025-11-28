@@ -1,8 +1,9 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
-import { ProcessSection } from "@/components/ProcessSection";
-import { ProductsSection } from "@/components/ProductsSection";
-import { ContactSection } from "@/components/ContactSection";
+import { CompanySection } from "@/components/CompanySection";
+import { ProductShowcase } from "@/components/ProductShowcase";
+import { LocationContact } from "@/components/LocationContact";
+import { Footer } from "@/components/Footer";
 
 const Index = () => {
   return (
@@ -10,10 +11,11 @@ const Index = () => {
       <Header />
       <main className="min-h-screen">
         <Hero />
-        <ProcessSection />
-        <ProductsSection />
-        <ContactSection />
+        <CompanySection />
+        <ProductShowcase />
+        <LocationContact />
       </main>
+      <Footer />
     </>
   );
 };
