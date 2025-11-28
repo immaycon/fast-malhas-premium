@@ -47,10 +47,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        "military-green": "hsl(var(--military-green))",
-        "burnt-orange": "hsl(var(--burnt-orange))",
-        charcoal: "hsl(var(--charcoal))",
-        "light-gray": "hsl(var(--light-gray))",
+        "forest-green": "hsl(var(--forest-green))",
+        "cobalt-blue": "hsl(var(--cobalt-blue))",
+        "silver-gray": "hsl(var(--silver-gray))",
+        graphite: "hsl(var(--graphite))",
       },
       fontFamily: {
         poppins: ["Poppins", "sans-serif"],
@@ -63,6 +63,7 @@ export default {
       boxShadow: {
         premium: "var(--shadow-premium)",
         card: "var(--shadow-card)",
+        elegant: "var(--shadow-elegant)",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -10,7 +10,10 @@ export const Header = () => {
 
   const navLinks = [
     { path: "/", label: "Início" },
-    { path: "/cores", label: "Cores" },
+    { path: "#tecidos", label: "Tecidos" },
+    { path: "#aviamentos", label: "Aviamentos" },
+    { path: "#empresa", label: "A Empresa" },
+    { path: "#contato", label: "Contato" },
   ];
 
   return (
@@ -18,27 +21,25 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center">
-            <img 
-              src={logo} 
-              alt="FAST Malhas" 
-              className="h-12 w-auto"
-            />
+            <div className="h-12 w-48 bg-gradient-to-r from-forest-green to-cobalt-blue rounded flex items-center justify-center">
+              <span className="font-poppins font-black text-2xl text-white">SERRA MALHAS</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <Link
+              <a
                 key={link.path}
-                to={link.path}
-                className={`font-poppins font-semibold text-lg transition-colors ${
-                  location.pathname === link.path
+                href={link.path}
+                className={`font-poppins font-semibold text-base transition-colors ${
+                  link.path === "/" && location.pathname === link.path
                     ? "text-primary"
-                    : "text-foreground hover:text-primary"
+                    : "text-foreground hover:text-secondary"
                 }`}
               >
                 {link.label}
-              </Link>
+              </a>
             ))}
           </nav>
 
@@ -57,18 +58,18 @@ export const Header = () => {
         {isMenuOpen && (
           <nav className="md:hidden py-4 border-t border-border">
             {navLinks.map((link) => (
-              <Link
+              <a
                 key={link.path}
-                to={link.path}
+                href={link.path}
                 onClick={() => setIsMenuOpen(false)}
                 className={`block py-3 font-poppins font-semibold text-lg ${
-                  location.pathname === link.path
+                  link.path === "/" && location.pathname === link.path
                     ? "text-primary"
                     : "text-foreground"
                 }`}
               >
                 {link.label}
-              </Link>
+              </a>
             ))}
           </nav>
         )}
