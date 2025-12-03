@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/fast-malhas-logo.png";
 
@@ -11,6 +11,7 @@ export const Header = () => {
   const navLinks = [
     { path: "/", label: "Início" },
     { path: "/cores", label: "Cores" },
+    { path: "/admin", label: "Área Admin", icon: Lock },
   ];
 
   return (
@@ -31,12 +32,13 @@ export const Header = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`font-poppins font-semibold text-lg transition-colors ${
+                className={`font-poppins font-semibold text-lg transition-colors flex items-center gap-2 ${
                   location.pathname === link.path
                     ? "text-primary"
                     : "text-foreground hover:text-primary"
-                }`}
+                } ${link.icon ? "bg-accent/10 px-4 py-2 rounded-lg hover:bg-accent/20" : ""}`}
               >
+                {link.icon && <link.icon className="w-4 h-4" />}
                 {link.label}
               </Link>
             ))}
