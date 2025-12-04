@@ -5,13 +5,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Calculator, Package, Palette, DollarSign, Home } from 'lucide-react';
+import { LogOut, Calculator, Package, Palette, DollarSign, Home, PaintBucket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logoImage from '@/assets/fast-malhas-logo.png';
 import { YarnPricesTab } from '@/components/admin/YarnPricesTab';
 import { CostCalculator } from '@/components/admin/CostCalculator';
 import { ProductsTab } from '@/components/admin/ProductsTab';
 import { ColorsTab } from '@/components/admin/ColorsTab';
+import { DyeingCostsTab } from '@/components/admin/DyeingCostsTab';
 
 const Admin = () => {
   const { user, isAdmin, loading, signOut } = useAuth();
@@ -76,7 +77,7 @@ const Admin = () => {
           transition={{ duration: 0.5 }}
         >
           <Tabs defaultValue="calculator" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-charcoal/50 border border-military/30 mb-8">
+            <TabsList className="grid w-full grid-cols-5 bg-charcoal/50 border border-military/30 mb-8">
               <TabsTrigger 
                 value="calculator" 
                 className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
@@ -93,6 +94,13 @@ const Admin = () => {
               </TabsTrigger>
               {isAdmin && (
                 <>
+                  <TabsTrigger 
+                    value="dyeing"
+                    className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                  >
+                    <PaintBucket className="w-4 h-4 mr-2" />
+                    Tinturaria
+                  </TabsTrigger>
                   <TabsTrigger 
                     value="products"
                     className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
@@ -121,6 +129,10 @@ const Admin = () => {
 
             {isAdmin && (
               <>
+                <TabsContent value="dyeing">
+                  <DyeingCostsTab />
+                </TabsContent>
+
                 <TabsContent value="products">
                   <ProductsTab />
                 </TabsContent>
