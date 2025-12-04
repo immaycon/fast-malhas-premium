@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, Mail, User, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, User, ArrowLeft, Key } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import logoImage from '@/assets/fast-malhas-logo.png';
 
 const Auth = () => {
@@ -16,6 +17,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [adminKey, setAdminKey] = useState('');
   const [loading, setLoading] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
@@ -51,22 +53,46 @@ const Auth = () => {
           navigate('/admin');
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
-        if (error) {
+        // First create the user
+        const { data: signUpData, error: signUpError } = await signUp(email, password, fullName);
+        if (signUpError) {
           toast({
             variant: 'destructive',
             title: 'Erro no cadastro',
-            description: error.message.includes('already registered')
+            description: signUpError.message.includes('already registered')
               ? 'Este email já está cadastrado'
-              : error.message
+              : signUpError.message
           });
+          return;
+        }
+
+        // If admin key is provided, try to use it
+        if (adminKey.trim() && signUpData?.user) {
+          const { data: keyResult, error: keyError } = await supabase
+            .rpc('use_admin_key', { 
+              _key: adminKey.trim(), 
+              _user_id: signUpData.user.id 
+            });
+
+          if (keyError || !keyResult) {
+            toast({
+              variant: 'default',
+              title: 'Conta criada',
+              description: 'Chave admin inválida ou já utilizada. Conta criada como usuário comum.'
+            });
+          } else {
+            toast({
+              title: 'Conta Admin criada!',
+              description: 'Sua conta foi criada com acesso administrativo.'
+            });
+          }
         } else {
           toast({
             title: 'Cadastro realizado!',
             description: 'Sua conta foi criada com sucesso.'
           });
-          navigate('/admin');
         }
+        navigate('/admin');
       }
     } catch (err) {
       toast({
@@ -109,21 +135,43 @@ const Auth = () => {
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-card-foreground">Nome Completo</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Seu nome"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="pl-10 bg-background border-input"
-                      required={!isLogin}
-                    />
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-card-foreground">Nome Completo</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Seu nome"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pl-10 bg-background border-input"
+                        required={!isLogin}
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="adminKey" className="text-card-foreground">
+                      Chave Admin <span className="text-muted-foreground text-xs">(opcional)</span>
+                    </Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="adminKey"
+                        type="text"
+                        placeholder="FAST-ADM-2025-XXXXX"
+                        value={adminKey}
+                        onChange={(e) => setAdminKey(e.target.value)}
+                        className="pl-10 bg-background border-input font-mono"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Insira uma chave válida para obter acesso administrativo
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">
