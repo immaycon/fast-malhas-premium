@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       colors: {
         Row: {
           category: string | null
@@ -319,6 +343,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      use_admin_key: {
+        Args: { _key: string; _user_id: string }
         Returns: boolean
       }
     }

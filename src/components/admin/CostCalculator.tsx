@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Calculator, Plus, Trash2, FileText } from 'lucide-react';
+import { Calculator, Plus, Trash2, FileText, AlertCircle } from 'lucide-react';
 
 interface Product {
   id: string;
@@ -25,10 +25,10 @@ interface Color {
   name: string;
 }
 
-interface YarnPrice {
-  yarn_type_id: string;
-  price: number;
-  yarn_name: string;
+interface ProductColor {
+  color_id: string;
+  color_name: string;
+  dyeing_cost: number;
 }
 
 interface ColorEntry {
@@ -52,19 +52,30 @@ interface CalculationResult {
 
 export const CostCalculator = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [colors, setColors] = useState<Color[]>([]);
+  const [allColors, setAllColors] = useState<Color[]>([]);
+  const [productColors, setProductColors] = useState<ProductColor[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [colorEntries, setColorEntries] = useState<{ colorId: string; quantity: string }[]>([
     { colorId: '', quantity: '' }
   ]);
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingColors, setLoadingColors] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchProducts();
-    fetchColors();
+    fetchAllColors();
   }, []);
+
+  useEffect(() => {
+    if (selectedProductId) {
+      fetchProductColors(selectedProductId);
+      // Reset color entries when product changes
+      setColorEntries([{ colorId: '', quantity: '' }]);
+      setResult(null);
+    }
+  }, [selectedProductId]);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -78,14 +89,40 @@ export const CostCalculator = () => {
     }
   };
 
-  const fetchColors = async () => {
+  const fetchAllColors = async () => {
     const { data, error } = await supabase
       .from('colors')
       .select('*')
       .order('name');
 
     if (!error && data) {
-      setColors(data);
+      setAllColors(data);
+    }
+  };
+
+  const fetchProductColors = async (productId: string) => {
+    setLoadingColors(true);
+    try {
+      // Fetch colors that have dyeing costs for this specific product
+      const { data, error } = await supabase
+        .from('dyeing_costs')
+        .select('color_id, cost, colors(name)')
+        .eq('product_id', productId);
+
+      if (!error && data) {
+        const colors: ProductColor[] = data.map((dc: any) => ({
+          color_id: dc.color_id,
+          color_name: dc.colors?.name || 'Desconhecida',
+          dyeing_cost: dc.cost
+        }));
+        setProductColors(colors);
+      } else {
+        setProductColors([]);
+      }
+    } catch (err) {
+      setProductColors([]);
+    } finally {
+      setLoadingColors(false);
     }
   };
 
@@ -159,7 +196,7 @@ export const CostCalculator = () => {
       // Calculate based on composition pattern (simplified - you'd want more sophisticated parsing)
       if (hasPoliester) {
         const poliesterPrice = priceMap['Poliéster'] || 0;
-        const proportion = hasElastano ? 0.94 : 1; // Default proportions
+        const proportion = hasElastano ? 0.94 : 1;
         yarnCosts.push({ name: 'Poliéster', cost: poliesterPrice, proportion });
         totalYarnCost += poliesterPrice * proportion;
       }
@@ -176,25 +213,16 @@ export const CostCalculator = () => {
         totalYarnCost += algodaoPrice * proportion;
       }
       if (hasElastano) {
-        // Determine elastano type from composition
         const elastanoPrice = priceMap['Elastano 20'] || priceMap['Elastano 40'] || 0;
         const proportion = 1 - (yarnCosts[0]?.proportion || 0);
         yarnCosts.push({ name: 'Elastano', cost: elastanoPrice, proportion });
         totalYarnCost += elastanoPrice * proportion;
       }
 
-      // Buscar custos de tinturaria para cada cor
-      const colorIds = validEntries.map(e => e.colorId);
-      const { data: dyeingCosts, error: dyeingError } = await supabase
-        .from('dyeing_costs')
-        .select('color_id, cost')
-        .eq('product_id', product.id)
-        .in('color_id', colorIds);
-
-      // Build dyeing cost map
+      // Build dyeing cost map from product colors
       const dyeingMap: Record<string, number> = {};
-      dyeingCosts?.forEach((dc) => {
-        dyeingMap[dc.color_id] = dc.cost;
+      productColors.forEach((pc) => {
+        dyeingMap[pc.color_id] = pc.dyeing_cost;
       });
 
       // Calculate per color
@@ -203,7 +231,7 @@ export const CostCalculator = () => {
       let totalValue = 0;
 
       for (const entry of validEntries) {
-        const color = colors.find(c => c.id === entry.colorId);
+        const productColor = productColors.find(pc => pc.color_id === entry.colorId);
         const quantity = parseFloat(entry.quantity);
         const dyeingCost = dyeingMap[entry.colorId] || 7.62; // Default dyeing cost
 
@@ -214,7 +242,7 @@ export const CostCalculator = () => {
 
         calculatedColors.push({
           colorId: entry.colorId,
-          colorName: color?.name || 'Desconhecida',
+          colorName: productColor?.color_name || 'Desconhecida',
           quantity,
           dyeingCost,
           costPerKg,
@@ -249,6 +277,11 @@ export const CostCalculator = () => {
     }
   };
 
+  // Get available colors based on product
+  const availableColors = productColors.length > 0 
+    ? productColors 
+    : allColors.map(c => ({ color_id: c.id, color_name: c.name, dyeing_cost: 7.62 }));
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Input Form */}
@@ -282,10 +315,27 @@ export const CostCalculator = () => {
             )}
           </div>
 
+          {/* Color Status Alert */}
+          {selectedProductId && productColors.length === 0 && !loadingColors && (
+            <div className="flex items-start gap-2 p-3 bg-accent/10 border border-accent/30 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Este produto não possui custos de tinturaria cadastrados. Será usado o custo padrão de R$ 7,62 por cor.
+              </p>
+            </div>
+          )}
+
           {/* Color Entries */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-card-foreground">Cores e Quantidades</Label>
+              <Label className="text-card-foreground">
+                Cores e Quantidades
+                {productColors.length > 0 && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    ({productColors.length} cores disponíveis)
+                  </span>
+                )}
+              </Label>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -303,14 +353,20 @@ export const CostCalculator = () => {
                   <Select 
                     value={entry.colorId} 
                     onValueChange={(value) => updateColorEntry(index, 'colorId', value)}
+                    disabled={loadingColors}
                   >
                     <SelectTrigger className="bg-background border-input">
-                      <SelectValue placeholder="Cor" />
+                      <SelectValue placeholder={loadingColors ? "Carregando..." : "Cor"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {colors.map((color) => (
-                        <SelectItem key={color.id} value={color.id}>
-                          {color.name}
+                      {availableColors.map((color) => (
+                        <SelectItem key={color.color_id} value={color.color_id}>
+                          {color.color_name}
+                          {productColors.length > 0 && (
+                            <span className="text-xs text-muted-foreground ml-2">
+                              R$ {color.dyeing_cost.toFixed(2)}
+                            </span>
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
