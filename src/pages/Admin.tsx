@@ -40,84 +40,91 @@ const Admin = () => {
     <div className="min-h-screen bg-gradient-to-br from-charcoal via-military/20 to-charcoal">
       {/* Header */}
       <header className="bg-charcoal/90 backdrop-blur border-b border-military/30 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src={logoImage} alt="Fast Malhas" className="h-10" />
-            <div>
-              <h1 className="font-poppins text-lg font-bold text-cream">Sistema de Custos</h1>
-              <p className="text-xs text-cream/60">{user.email}</p>
+        <div className="container mx-auto px-3 md:px-4 py-3 md:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
+            <img src={logoImage} alt="Fast Malhas" className="h-8 md:h-10 flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="font-poppins text-sm md:text-lg font-bold text-cream truncate">Sistema de Custos</h1>
+              <p className="text-[10px] md:text-xs text-cream/60 truncate">{user.email}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1 md:gap-4 flex-shrink-0">
             <Link to="/">
-              <Button variant="ghost" size="sm" className="text-cream/80 hover:text-cream hover:bg-military/30">
-                <Home className="w-4 h-4 mr-2" />
-                Site
+              <Button variant="ghost" size="sm" className="text-cream/80 hover:text-cream hover:bg-military/30 px-2 md:px-3">
+                <Home className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Site</span>
               </Button>
             </Link>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={signOut}
-              className="text-cream/80 hover:text-cream hover:bg-military/30"
+              className="text-cream/80 hover:text-cream hover:bg-military/30 px-2 md:px-3"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
+              <LogOut className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Sair</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <Tabs defaultValue="calculator" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-charcoal/50 border border-military/30 mb-8">
-              <TabsTrigger 
-                value="calculator" 
-                className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-              >
-                <Calculator className="w-4 h-4 mr-2" />
-                Calculadora
-              </TabsTrigger>
-              <TabsTrigger 
-                value="yarns"
-                className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-              >
-                <DollarSign className="w-4 h-4 mr-2" />
-                Preços Fios
-              </TabsTrigger>
-              {isAdmin && (
-                <>
-                  <TabsTrigger 
-                    value="dyeing"
-                    className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-                  >
-                    <PaintBucket className="w-4 h-4 mr-2" />
-                    Tinturaria
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="products"
-                    className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-                  >
-                    <Package className="w-4 h-4 mr-2" />
-                    Produtos
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="colors"
-                    className="font-poppins data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    Cores
-                  </TabsTrigger>
-                </>
-              )}
-            </TabsList>
+            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-8">
+              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-5 bg-charcoal/50 border border-military/30 gap-1 p-1">
+                <TabsTrigger 
+                  value="calculator" 
+                  className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                >
+                  <Calculator className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Calculadora</span>
+                  <span className="sm:hidden">Calc</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="yarns"
+                  className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                >
+                  <DollarSign className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Preços Fios</span>
+                  <span className="sm:hidden">Fios</span>
+                </TabsTrigger>
+                {isAdmin && (
+                  <>
+                    <TabsTrigger 
+                      value="dyeing"
+                      className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                    >
+                      <PaintBucket className="w-4 h-4 mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">Tinturaria</span>
+                      <span className="sm:hidden">Tint</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="products"
+                      className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                    >
+                      <Package className="w-4 h-4 mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">Produtos</span>
+                      <span className="sm:hidden">Prod</span>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="colors"
+                      className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                    >
+                      <Palette className="w-4 h-4 mr-1 md:mr-2" />
+                      <span className="hidden sm:inline">Cores</span>
+                      <span className="sm:hidden">Cor</span>
+                    </TabsTrigger>
+                  </>
+                )}
+              </TabsList>
+            </div>
 
             <TabsContent value="calculator">
               <CostCalculator />
