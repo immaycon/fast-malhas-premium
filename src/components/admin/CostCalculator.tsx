@@ -102,6 +102,7 @@ export const CostCalculator = () => {
 
   const fetchProductColors = async (productId: string) => {
     setLoadingColors(true);
+    setProductColors([]);
     try {
       // Fetch colors that have dyeing costs for this specific product
       const { data, error } = await supabase
@@ -109,17 +110,24 @@ export const CostCalculator = () => {
         .select('color_id, cost, colors(name)')
         .eq('product_id', productId);
 
-      if (!error && data) {
+      if (error) {
+        console.error('Error fetching product colors:', error);
+        setProductColors([]);
+        return;
+      }
+
+      if (data && data.length > 0) {
         const colors: ProductColor[] = data.map((dc: any) => ({
           color_id: dc.color_id,
           color_name: dc.colors?.name || 'Desconhecida',
-          dyeing_cost: dc.cost
+          dyeing_cost: Number(dc.cost) || 0
         }));
         setProductColors(colors);
       } else {
         setProductColors([]);
       }
     } catch (err) {
+      console.error('Exception fetching product colors:', err);
       setProductColors([]);
     } finally {
       setLoadingColors(false);
