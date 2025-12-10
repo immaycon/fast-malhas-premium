@@ -312,6 +312,12 @@ export const CostCalculator = () => {
     const accentColor: [number, number, number] = [198, 120, 55];
     const textColor: [number, number, number] = [51, 51, 51];
 
+    // Generate order number
+    const lastOrderNum = parseInt(localStorage.getItem('fastmalhas_order_num') || '0', 10);
+    const newOrderNum = lastOrderNum + 1;
+    localStorage.setItem('fastmalhas_order_num', newOrderNum.toString());
+    const orderNumber = newOrderNum.toString().padStart(4, '0');
+
     // Header
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, pageWidth, 35, 'F');
@@ -322,6 +328,11 @@ export const CostCalculator = () => {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('Pedido de Orçamento', margin, 30);
+
+    // Order number in header
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Nº ${orderNumber}`, pageWidth - margin - 20, 22);
 
     yPos = 50;
 
@@ -455,7 +466,7 @@ export const CostCalculator = () => {
     // Generate filename
     const sanitizedName = customerName.trim().replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
     const dateForFile = today.toISOString().split('T')[0];
-    const filename = `${sanitizedName}_${dateForFile}.pdf`;
+    const filename = `Pedido_${orderNumber}_${sanitizedName}_${dateForFile}.pdf`;
 
     doc.save(filename);
 
@@ -682,7 +693,7 @@ export const CostCalculator = () => {
                 </div>
                 <Button 
                   onClick={generatePDF}
-                  className="w-full bg-military hover:bg-military/90 text-white font-poppins font-bold"
+                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Criar Pedido (PDF)
