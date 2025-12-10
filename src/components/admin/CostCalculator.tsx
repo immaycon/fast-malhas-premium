@@ -297,12 +297,12 @@ export const CostCalculator = () => {
     ? productColors 
     : allColors.map(c => ({ color_id: c.id, color_name: c.name, dyeing_cost: 7.62 }));
 
-  const generatePDF = async () => {
+  const generatePDF = async (type: 'pedido' | 'orcamento') => {
     if (!result || !customerName.trim()) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Preencha o nome do cliente para gerar o pedido.'
+        description: `Preencha o nome do cliente para gerar o ${type === 'pedido' ? 'pedido' : 'orçamento'}.`
       });
       return;
     }
@@ -312,15 +312,23 @@ export const CostCalculator = () => {
     const margin = 20;
     let yPos = 20;
 
-    // Colors - #009B3A (FAST Malhas green)
-    const primaryColor: [number, number, number] = [0, 155, 58];
+    // Colors - Green #009B3A or Orange #C67837
+    const greenColor: [number, number, number] = [0, 155, 58];
+    const orangeColor: [number, number, number] = [198, 120, 55];
+    const primaryColor: [number, number, number] = type === 'pedido' ? greenColor : orangeColor;
     const textColor: [number, number, number] = [51, 51, 51];
 
+    // Document title based on type
+    const docTitle = type === 'pedido' ? 'Pedido Fechado' : 'Orçamento';
+    const filePrefix = type === 'pedido' ? 'Pedido' : 'Orcamento';
+    const summaryTitle = type === 'pedido' ? 'RESUMO DO PEDIDO' : 'RESUMO DO ORÇAMENTO';
+
     // Generate order number
-    const lastOrderNum = parseInt(localStorage.getItem('fastmalhas_order_num') || '0', 10);
-    const newOrderNum = lastOrderNum + 1;
-    localStorage.setItem('fastmalhas_order_num', newOrderNum.toString());
-    const orderNumber = newOrderNum.toString().padStart(4, '0');
+    const storageKey = type === 'pedido' ? 'fastmalhas_order_num' : 'fastmalhas_quote_num';
+    const lastNum = parseInt(localStorage.getItem(storageKey) || '0', 10);
+    const newNum = lastNum + 1;
+    localStorage.setItem(storageKey, newNum.toString());
+    const docNumber = newNum.toString().padStart(4, '0');
 
     // Header
     doc.setFillColor(...primaryColor);
@@ -346,12 +354,12 @@ export const CostCalculator = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Pedido de Orçamento', margin + 55, 22);
+    doc.text(docTitle, margin + 55, 22);
 
     // Order number in header
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Nº ${orderNumber}`, pageWidth - margin - 20, 22);
+    doc.text(`Nº ${docNumber}`, pageWidth - margin - 20, 22);
 
     yPos = 50;
 
@@ -462,7 +470,7 @@ export const CostCalculator = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('RESUMO DO PEDIDO', margin + 5, yPos + 10);
+    doc.text(summaryTitle, margin + 5, yPos + 10);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -491,12 +499,12 @@ export const CostCalculator = () => {
     // Generate filename
     const sanitizedName = customerName.trim().replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
     const dateForFile = today.toISOString().split('T')[0];
-    const filename = `Pedido_${orderNumber}_${sanitizedName}_${dateForFile}.pdf`;
+    const filename = `${filePrefix}_${docNumber}_${sanitizedName}_${dateForFile}.pdf`;
 
     doc.save(filename);
 
     toast({
-      title: 'Pedido criado!',
+      title: type === 'pedido' ? 'Pedido criado!' : 'Orçamento criado!',
       description: `PDF "${filename}" foi baixado com sucesso.`
     });
   };
@@ -713,13 +721,22 @@ export const CostCalculator = () => {
                     className="bg-background border-input"
                   />
                 </div>
-                <Button 
-                  onClick={generatePDF}
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Criar Pedido (PDF)
-                </Button>
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => generatePDF('orcamento')}
+                    className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Criar Orçamento (PDF)
+                  </Button>
+                  <Button 
+                    onClick={() => generatePDF('pedido')}
+                    className="flex-1 bg-[#009B3A] hover:bg-[#007A2E] text-white font-poppins font-bold"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Criar Pedido (PDF)
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
