@@ -9,6 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Calculator, Plus, Trash2, FileText, AlertCircle, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 
+// Format number to Brazilian currency format (10.000,00)
+const formatBRL = (value: number): string => {
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
 interface Product {
   id: string;
   code: string;
@@ -307,8 +312,8 @@ export const CostCalculator = () => {
     const margin = 20;
     let yPos = 20;
 
-    // Colors
-    const primaryColor: [number, number, number] = [74, 85, 49];
+    // Colors - #009B3A (FAST Malhas green)
+    const primaryColor: [number, number, number] = [0, 155, 58];
     const accentColor: [number, number, number] = [198, 120, 55];
     const textColor: [number, number, number] = [51, 51, 51];
 
@@ -386,8 +391,7 @@ export const CostCalculator = () => {
     const techInfo = [
       `Gramatura: ${result.product.weight_gsm || '-'} g/m²`,
       `Largura: ${result.product.width_cm || '-'} cm`,
-      `Rendimento: ${result.product.yield_m_kg || '-'} m/kg`,
-      `Fator de Aproveitamento: ${(result.product.efficiency_factor * 100).toFixed(0)}%`
+      `Rendimento: ${result.product.yield_m_kg || '-'} m/kg`
     ];
     techInfo.forEach((info) => {
       doc.text(info, margin, yPos);
@@ -430,9 +434,9 @@ export const CostCalculator = () => {
       
       doc.setFontSize(9);
       doc.text(color.colorName, margin + 5, yPos + 6);
-      doc.text(color.quantity.toFixed(2), margin + 70, yPos + 6);
-      doc.text(`R$ ${color.costPerKg.toFixed(2)}`, margin + 105, yPos + 6);
-      doc.text(`R$ ${color.totalCost.toFixed(2)}`, margin + 140, yPos + 6);
+      doc.text(formatBRL(color.quantity), margin + 70, yPos + 6);
+      doc.text(`R$ ${formatBRL(color.costPerKg)}`, margin + 105, yPos + 6);
+      doc.text(`R$ ${formatBRL(color.totalCost)}`, margin + 140, yPos + 6);
       yPos += 8;
     });
 
@@ -448,13 +452,13 @@ export const CostCalculator = () => {
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total em KG: ${result.totalKg.toFixed(2)} KG`, margin + 5, yPos + 20);
-    doc.text(`Custo Médio/KG: R$ ${result.averageCostPerKg.toFixed(2)}`, margin + 5, yPos + 28);
+    doc.text(`Total em KG: ${formatBRL(result.totalKg)} KG`, margin + 5, yPos + 20);
+    doc.text(`Custo Médio/KG: R$ ${formatBRL(result.averageCostPerKg)}`, margin + 5, yPos + 28);
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...accentColor);
-    doc.text(`VALOR TOTAL: R$ ${result.totalValue.toFixed(2)}`, pageWidth - margin - 70, yPos + 28);
+    doc.text(`VALOR TOTAL: R$ ${formatBRL(result.totalValue)}`, pageWidth - margin - 70, yPos + 28);
 
     // Footer
     const footerY = doc.internal.pageSize.getHeight() - 15;
@@ -616,9 +620,6 @@ export const CostCalculator = () => {
                   {result.product.code} - {result.product.name}
                 </h4>
                 <p className="text-sm text-muted-foreground">{result.product.composition}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Fator de Aproveitamento: {(result.product.efficiency_factor * 100).toFixed(0)}%
-                </p>
               </div>
 
               {/* Yarn Costs Breakdown */}
@@ -644,13 +645,13 @@ export const CostCalculator = () => {
                     <div key={i} className="p-3 bg-background/50 rounded border border-military/10">
                       <div className="flex justify-between">
                         <span className="font-medium text-card-foreground">{color.colorName}</span>
-                        <span className="text-card-foreground">{color.quantity.toFixed(2)} KG</span>
+                        <span className="text-card-foreground">{formatBRL(color.quantity)} KG</span>
                       </div>
                       <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>R$ {color.costPerKg.toFixed(2)}/KG</span>
+                        <span>R$ {formatBRL(color.costPerKg)}/KG</span>
                       </div>
                       <div className="text-right text-sm font-medium text-accent">
-                        Subtotal: R$ {color.totalCost.toFixed(2)}
+                        Subtotal: R$ {formatBRL(color.totalCost)}
                       </div>
                     </div>
                   ))}
@@ -662,19 +663,19 @@ export const CostCalculator = () => {
                 <div className="flex justify-between text-lg">
                   <span className="text-card-foreground">Total KG:</span>
                   <span className="font-bold text-card-foreground">
-                    {result.totalKg.toFixed(2)} KG
+                    {formatBRL(result.totalKg)} KG
                   </span>
                 </div>
                 <div className="flex justify-between text-lg">
                   <span className="text-card-foreground">Custo Médio/KG:</span>
                   <span className="font-bold text-accent">
-                    R$ {result.averageCostPerKg.toFixed(2)}
+                    R$ {formatBRL(result.averageCostPerKg)}
                   </span>
                 </div>
                 <div className="flex justify-between text-xl bg-accent/10 p-4 rounded-lg">
                   <span className="font-poppins font-bold text-card-foreground">VALOR TOTAL:</span>
                   <span className="font-poppins font-black text-accent">
-                    R$ {result.totalValue.toFixed(2)}
+                    R$ {formatBRL(result.totalValue)}
                   </span>
                 </div>
               </div>
