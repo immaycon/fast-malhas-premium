@@ -297,7 +297,7 @@ export const CostCalculator = () => {
     ? productColors 
     : allColors.map(c => ({ color_id: c.id, color_name: c.name, dyeing_cost: 7.62 }));
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     if (!result || !customerName.trim()) {
       toast({
         variant: 'destructive',
@@ -314,7 +314,6 @@ export const CostCalculator = () => {
 
     // Colors - #009B3A (FAST Malhas green)
     const primaryColor: [number, number, number] = [0, 155, 58];
-    const accentColor: [number, number, number] = [198, 120, 55];
     const textColor: [number, number, number] = [51, 51, 51];
 
     // Generate order number
@@ -326,13 +325,28 @@ export const CostCalculator = () => {
     // Header
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, pageWidth, 35, 'F');
+
+    // Add logo image
+    try {
+      const logoImg = new Image();
+      logoImg.src = '/src/assets/grupo-fast-logo.jpg';
+      await new Promise((resolve, reject) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = reject;
+      });
+      doc.addImage(logoImg, 'JPEG', margin, 5, 50, 25);
+    } catch (e) {
+      // Fallback to text if logo fails
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('GRUPO FAST', margin, 22);
+    }
+
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FAST MALHAS', margin, 22);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text('Pedido de Orçamento', margin, 30);
+    doc.text('Pedido de Orçamento', margin + 55, 22);
 
     // Order number in header
     doc.setFontSize(12);
@@ -408,7 +422,7 @@ export const CostCalculator = () => {
     yPos += 8;
 
     // Table Header
-    doc.setFillColor(...accentColor);
+    doc.setFillColor(...primaryColor);
     doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
@@ -457,8 +471,15 @@ export const CostCalculator = () => {
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...accentColor);
-    doc.text(`VALOR TOTAL: R$ ${formatBRL(result.totalValue)}`, pageWidth - margin - 70, yPos + 28);
+    doc.setTextColor(255, 255, 255);
+    const totalText = `VALOR TOTAL: R$ ${formatBRL(result.totalValue)}`;
+    const totalX = pageWidth - margin - 70;
+    const totalY = yPos + 28;
+    doc.text(totalText, totalX, totalY);
+    // Underline
+    const textWidth = doc.getTextWidth(totalText);
+    doc.setDrawColor(255, 255, 255);
+    doc.line(totalX, totalY + 1, totalX + textWidth, totalY + 1);
 
     // Footer
     const footerY = doc.internal.pageSize.getHeight() - 15;
