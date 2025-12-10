@@ -9,10 +9,10 @@ const products = [
     name: "MICROFIBRA DE POLIAMIDA",
     description: "O toque suave da poliamida com alta respirabilidade e secagem rápida. Perfeito para moda fitness e casual de luxo.",
     specs: [
-      "Gramatura: $$XX$$ g/m²",
-      "Largura: $$XX$$ cm",
-      "Rendimento: $$XX$$ m/kg",
-      "Composição: $$% Poliamida, % Elastano$$"
+      "Gramatura: 180 g/m²",
+      "Largura: 1,65 m",
+      "Rendimento: 3,40 m/kg",
+      "Composição: 91% Poliamida, 9% Elastano"
     ],
     image: microfibraTexture
   },
@@ -20,21 +20,21 @@ const products = [
     name: "ROMANTIC LISA",
     description: "Caimento leve e fluido, ideal para peças que exigem elegância e movimento. Resistente ao amarrotamento.",
     specs: [
-      "Gramatura: $$XX$$ g/m²",
-      "Largura: $$XX$$ cm",
-      "Rendimento: $$XX$$ m/kg",
-      "Composição: $$% Poliéster, % Elastano$$"
+      "Gramatura: 180 g/m²",
+      "Largura: 1,65 m",
+      "Rendimento: 3,40 m/kg",
+      "Composição: 94% Poliéster, 6% Elastano"
     ],
     image: romanticTexture
   },
   {
-    name: "SUPLEX",
+    name: "SUPLEX LISO 320",
     description: "Elasticidade e compressão excepcionais, oferecendo suporte e conforto. Ideal para leggings e vestuário de alta performance.",
     specs: [
-      "Gramatura: $$XX$$ g/m²",
-      "Largura: $$XX$$ cm",
-      "Rendimento: $$XX$$ m/kg",
-      "Composição: $$% Poliamida, % Elastano$$"
+      "Gramatura: 320 g/m²",
+      "Largura: 1,65 m",
+      "Rendimento: 1,90 m/kg",
+      "Composição: 92% Poliéster, 8% Elastano"
     ],
     image: suplexTexture
   }
