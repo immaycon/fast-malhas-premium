@@ -369,12 +369,10 @@ export const CostCalculator = () => {
                     <SelectContent>
                       {availableColors.map((color) => (
                         <SelectItem key={color.color_id} value={color.color_id}>
-                          {color.color_name}
-                          {productColors.length > 0 && (
-                            <span className="text-xs text-muted-foreground ml-2">
-                              R$ {color.dyeing_cost.toFixed(2)}
-                            </span>
-                          )}
+                          {productColors.length > 0 
+                            ? `${color.color_name} - R$ ${color.dyeing_cost?.toFixed(2) || '0.00'}`
+                            : color.color_name
+                          }
                         </SelectItem>
                       ))}
                     </SelectContent>
