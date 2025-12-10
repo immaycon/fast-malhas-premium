@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Calculator, Plus, Trash2, FileText, AlertCircle } from 'lucide-react';
+import { Calculator, Plus, Trash2, FileText, AlertCircle, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 interface Product {
   id: string;
@@ -61,6 +62,7 @@ export const CostCalculator = () => {
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingColors, setLoadingColors] = useState(false);
+  const [customerName, setCustomerName] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -290,6 +292,179 @@ export const CostCalculator = () => {
     ? productColors 
     : allColors.map(c => ({ color_id: c.id, color_name: c.name, dyeing_cost: 7.62 }));
 
+  const generatePDF = () => {
+    if (!result || !customerName.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Preencha o nome do cliente para gerar o pedido.'
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    let yPos = 20;
+
+    // Colors
+    const primaryColor: [number, number, number] = [74, 85, 49];
+    const accentColor: [number, number, number] = [198, 120, 55];
+    const textColor: [number, number, number] = [51, 51, 51];
+
+    // Header
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FAST MALHAS', margin, 22);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Pedido de Orçamento', margin, 30);
+
+    yPos = 50;
+
+    // Date
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('pt-BR');
+    doc.setTextColor(...textColor);
+    doc.setFontSize(10);
+    doc.text(`Data: ${dateStr}`, pageWidth - margin - 40, yPos);
+
+    // Customer Name
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('Cliente:', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.text(customerName, margin + 25, yPos);
+
+    yPos += 20;
+
+    // Product Info Box
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'F');
+    doc.setDrawColor(...primaryColor);
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'S');
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('ARTIGO', margin + 5, yPos + 10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.setFontSize(11);
+    doc.text(`${result.product.code} - ${result.product.name}`, margin + 5, yPos + 20);
+    doc.setFontSize(9);
+    doc.text(`${result.product.composition || 'Composição não informada'}`, margin + 5, yPos + 28);
+
+    yPos += 45;
+
+    // Technical Sheet
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('FICHA TÉCNICA', margin, yPos);
+    yPos += 8;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    const techInfo = [
+      `Gramatura: ${result.product.weight_gsm || '-'} g/m²`,
+      `Largura: ${result.product.width_cm || '-'} cm`,
+      `Rendimento: ${result.product.yield_m_kg || '-'} m/kg`,
+      `Fator de Aproveitamento: ${(result.product.efficiency_factor * 100).toFixed(0)}%`
+    ];
+    techInfo.forEach((info) => {
+      doc.text(info, margin, yPos);
+      yPos += 6;
+    });
+
+    yPos += 10;
+
+    // Color Details Table Header
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('DETALHAMENTO POR COR', margin, yPos);
+    yPos += 8;
+
+    // Table Header
+    doc.setFillColor(...accentColor);
+    doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COR', margin + 5, yPos + 6);
+    doc.text('QTD (KG)', margin + 70, yPos + 6);
+    doc.text('R$/KG', margin + 105, yPos + 6);
+    doc.text('SUBTOTAL', margin + 140, yPos + 6);
+    yPos += 10;
+
+    // Table Rows
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    result.colors.forEach((color, index) => {
+      if (yPos > 260) {
+        doc.addPage();
+        yPos = 20;
+      }
+      
+      const bgColor: [number, number, number] = index % 2 === 0 ? [255, 255, 255] : [248, 248, 248];
+      doc.setFillColor(...bgColor);
+      doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
+      
+      doc.setFontSize(9);
+      doc.text(color.colorName, margin + 5, yPos + 6);
+      doc.text(color.quantity.toFixed(2), margin + 70, yPos + 6);
+      doc.text(`R$ ${color.costPerKg.toFixed(2)}`, margin + 105, yPos + 6);
+      doc.text(`R$ ${color.totalCost.toFixed(2)}`, margin + 140, yPos + 6);
+      yPos += 8;
+    });
+
+    yPos += 10;
+
+    // Totals Box
+    doc.setFillColor(...primaryColor);
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 40, 3, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RESUMO DO PEDIDO', margin + 5, yPos + 10);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total em KG: ${result.totalKg.toFixed(2)} KG`, margin + 5, yPos + 20);
+    doc.text(`Custo Médio/KG: R$ ${result.averageCostPerKg.toFixed(2)}`, margin + 5, yPos + 28);
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...accentColor);
+    doc.text(`VALOR TOTAL: R$ ${result.totalValue.toFixed(2)}`, pageWidth - margin - 70, yPos + 28);
+
+    // Footer
+    const footerY = doc.internal.pageSize.getHeight() - 15;
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('FAST Malhas - Qualidade e Confiança em Malhas', pageWidth / 2, footerY, { align: 'center' });
+
+    // Generate filename
+    const sanitizedName = customerName.trim().replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+    const dateForFile = today.toISOString().split('T')[0];
+    const filename = `${sanitizedName}_${dateForFile}.pdf`;
+
+    doc.save(filename);
+
+    toast({
+      title: 'Pedido criado!',
+      description: `PDF "${filename}" foi baixado com sucesso.`
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Input Form */}
@@ -448,12 +623,6 @@ export const CostCalculator = () => {
                     </span>
                   </div>
                 ))}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tecelagem</span>
-                  <span className="text-card-foreground">
-                    R$ {result.weavingCost.toFixed(2)}
-                  </span>
-                </div>
               </div>
 
               {/* Color Breakdown */}
@@ -467,7 +636,6 @@ export const CostCalculator = () => {
                         <span className="text-card-foreground">{color.quantity.toFixed(2)} KG</span>
                       </div>
                       <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Tinturaria: R$ {color.dyeingCost.toFixed(2)}</span>
                         <span>R$ {color.costPerKg.toFixed(2)}/KG</span>
                       </div>
                       <div className="text-right text-sm font-medium text-accent">
@@ -498,6 +666,27 @@ export const CostCalculator = () => {
                     R$ {result.totalValue.toFixed(2)}
                   </span>
                 </div>
+              </div>
+
+              {/* Customer Name & PDF Generation */}
+              <div className="border-t border-military/30 pt-4 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-card-foreground">Nome do Cliente</Label>
+                  <Input
+                    type="text"
+                    placeholder="Digite o nome do cliente"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="bg-background border-input"
+                  />
+                </div>
+                <Button 
+                  onClick={generatePDF}
+                  className="w-full bg-military hover:bg-military/90 text-white font-poppins font-bold"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Criar Pedido (PDF)
+                </Button>
               </div>
             </div>
           ) : (
