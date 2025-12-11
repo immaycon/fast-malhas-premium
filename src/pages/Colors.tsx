@@ -41,14 +41,7 @@ const colorDatabase: ColorItem[] = [
 ];
 
 export default function Colors() {
-  const [selectedTones, setSelectedTones] = useState<string[]>([]);
   const [selectedScales, setSelectedScales] = useState<string[]>([]);
-
-  const tones = [
-    { value: "especial", label: "Especial" },
-    { value: "normal", label: "Normal" },
-    { value: "programavel", label: "Programáveis" },
-  ];
 
   const scales = [
     { value: "amarelo", label: "Amarelo" },
@@ -65,22 +58,15 @@ export default function Colors() {
     { value: "vermelho", label: "Vermelho" },
   ];
 
-  const toggleFilter = (type: "tone" | "scale", value: string) => {
-    if (type === "tone") {
-      setSelectedTones(prev =>
-        prev.includes(value) ? prev.filter(t => t !== value) : [...prev, value]
-      );
-    } else {
-      setSelectedScales(prev =>
-        prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]
-      );
-    }
+  const toggleFilter = (value: string) => {
+    setSelectedScales(prev =>
+      prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]
+    );
   };
 
   const filteredColors = colorDatabase.filter(color => {
-    const toneMatch = selectedTones.length === 0 || selectedTones.includes(color.tone);
     const scaleMatch = selectedScales.length === 0 || selectedScales.includes(color.scale);
-    return toneMatch && scaleMatch;
+    return scaleMatch;
   });
 
   return (
@@ -117,30 +103,6 @@ export default function Colors() {
                   Filtros
                 </h2>
 
-                {/* Tonalidades */}
-                <div className="mb-8">
-                  <h3 className="font-poppins text-sm font-bold text-foreground mb-4 uppercase tracking-wide">
-                    Tonalidades
-                  </h3>
-                  <div className="space-y-3">
-                    {tones.map(tone => (
-                      <div key={tone.value} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`tone-${tone.value}`}
-                          checked={selectedTones.includes(tone.value)}
-                          onCheckedChange={() => toggleFilter("tone", tone.value)}
-                        />
-                        <Label
-                          htmlFor={`tone-${tone.value}`}
-                          className="text-sm font-medium cursor-pointer"
-                        >
-                          {tone.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Escala de Cores */}
                 <div>
                   <h3 className="font-poppins text-sm font-bold text-foreground mb-4 uppercase tracking-wide">
@@ -153,7 +115,7 @@ export default function Colors() {
                           <Checkbox
                             id={`scale-${scale.value}`}
                             checked={selectedScales.includes(scale.value)}
-                            onCheckedChange={() => toggleFilter("scale", scale.value)}
+                            onCheckedChange={() => toggleFilter(scale.value)}
                           />
                           <Label
                             htmlFor={`scale-${scale.value}`}
