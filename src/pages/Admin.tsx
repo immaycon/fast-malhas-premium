@@ -5,13 +5,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Calculator, Package, Palette, DollarSign, Home, PaintBucket } from 'lucide-react';
+import { LogOut, Calculator, Package, DollarSign, Home, PaintBucket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logoImage from '@/assets/fast-malhas-logo.png';
 import { YarnPricesTab } from '@/components/admin/YarnPricesTab';
 import { CostCalculator } from '@/components/admin/CostCalculator';
 import { ProductsTab } from '@/components/admin/ProductsTab';
-import { ColorsTab } from '@/components/admin/ColorsTab';
 import { DyeingCostsTab } from '@/components/admin/DyeingCostsTab';
 
 const Admin = () => {
@@ -78,7 +77,7 @@ const Admin = () => {
         >
           <Tabs defaultValue="calculator" className="w-full">
             <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-8">
-              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-5 bg-charcoal/50 border border-military/30 gap-1 p-1">
+              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-4 bg-charcoal/50 border border-military/30 gap-1 p-1">
                 <TabsTrigger 
                   value="calculator" 
                   className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
@@ -113,14 +112,6 @@ const Admin = () => {
                       <span className="hidden sm:inline">Produtos</span>
                       <span className="sm:hidden">Prod</span>
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="colors"
-                      className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
-                    >
-                      <Palette className="w-4 h-4 mr-1 md:mr-2" />
-                      <span className="hidden sm:inline">Cores</span>
-                      <span className="sm:hidden">Cor</span>
-                    </TabsTrigger>
                   </>
                 )}
               </TabsList>
@@ -142,10 +133,6 @@ const Admin = () => {
 
                 <TabsContent value="products">
                   <ProductsTab />
-                </TabsContent>
-
-                <TabsContent value="colors">
-                  <ColorsTab />
                 </TabsContent>
               </>
             )}
