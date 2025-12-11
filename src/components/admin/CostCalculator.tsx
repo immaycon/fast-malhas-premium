@@ -337,18 +337,18 @@ export const CostCalculator = () => {
     // Add logo image
     try {
       const logoImg = new Image();
-      logoImg.src = '/src/assets/grupo-fast-logo.jpg';
+      logoImg.src = '/fast-malhas-logo-pdf.png';
       await new Promise((resolve, reject) => {
         logoImg.onload = resolve;
         logoImg.onerror = reject;
       });
-      doc.addImage(logoImg, 'JPEG', margin, 5, 50, 25);
+      doc.addImage(logoImg, 'PNG', margin, 5, 40, 20);
     } catch (e) {
       // Fallback to text if logo fails
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text('GRUPO FAST', margin, 22);
+      doc.text('FAST Malhas', margin, 22);
     }
 
     doc.setTextColor(255, 255, 255);
@@ -400,7 +400,7 @@ export const CostCalculator = () => {
 
     yPos += 45;
 
-    // Custo Médio por KG em destaque
+    // Custo Médio por KG em destaque (abaixo da composição)
     doc.setFillColor(...primaryColor);
     doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 18, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
@@ -476,7 +476,7 @@ export const CostCalculator = () => {
 
     // Totals Box
     doc.setFillColor(...primaryColor);
-    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 40, 3, 3, 'F');
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
@@ -485,19 +485,18 @@ export const CostCalculator = () => {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total em KG: ${formatBRL(result.totalKg)} KG`, margin + 5, yPos + 20);
-    doc.text(`Custo Médio/KG: R$ ${formatBRL(result.averageCostPerKg)}`, margin + 5, yPos + 28);
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
     const totalText = `VALOR TOTAL ESTIMADO: R$ ${formatBRL(result.totalValue)}`;
-    const totalX = pageWidth - margin - 70;
+    const totalX = pageWidth - margin - 5;
     const totalY = yPos + 28;
-    doc.text(totalText, totalX, totalY);
+    doc.text(totalText, totalX, totalY, { align: 'right' });
     // Underline
     const textWidth = doc.getTextWidth(totalText);
     doc.setDrawColor(255, 255, 255);
-    doc.line(totalX, totalY + 1, totalX + textWidth, totalY + 1);
+    doc.line(totalX - textWidth, totalY + 1, totalX, totalY + 1);
 
     // Footer
     const footerY = doc.internal.pageSize.getHeight() - 15;
