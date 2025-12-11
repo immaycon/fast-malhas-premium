@@ -400,6 +400,16 @@ export const CostCalculator = () => {
 
     yPos += 45;
 
+    // Custo Médio por KG em destaque
+    doc.setFillColor(...primaryColor);
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 18, 3, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`CUSTO MÉDIO POR KG: R$ ${formatBRL(result.averageCostPerKg)}`, margin + 5, yPos + 12);
+
+    yPos += 28;
+
     // Technical Sheet
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
@@ -480,7 +490,7 @@ export const CostCalculator = () => {
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    const totalText = `VALOR TOTAL: R$ ${formatBRL(result.totalValue)}`;
+    const totalText = `VALOR TOTAL ESTIMADO: R$ ${formatBRL(result.totalValue)}`;
     const totalX = pageWidth - margin - 70;
     const totalY = yPos + 28;
     doc.text(totalText, totalX, totalY);
@@ -702,7 +712,7 @@ export const CostCalculator = () => {
                   </span>
                 </div>
                 <div className="flex justify-between text-xl bg-accent/10 p-4 rounded-lg">
-                  <span className="font-poppins font-bold text-card-foreground">VALOR TOTAL:</span>
+                  <span className="font-poppins font-bold text-card-foreground">VALOR TOTAL ESTIMADO:</span>
                   <span className="font-poppins font-black text-accent">
                     R$ {formatBRL(result.totalValue)}
                   </span>
