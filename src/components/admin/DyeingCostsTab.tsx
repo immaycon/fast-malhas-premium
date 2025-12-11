@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Palette, Plus, Trash2, Save, Search, Edit2, X } from 'lucide-react';
-
+import { DyeingCostsImport } from './DyeingCostsImport';
 interface Product {
   id: string;
   code: string;
@@ -37,12 +37,20 @@ export const DyeingCostsTab = () => {
   const [searchColor, setSearchColor] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCost, setEditCost] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // For adding new costs
   const [newColorId, setNewColorId] = useState('');
   const [newCost, setNewCost] = useState('');
   
   const { toast } = useToast();
+
+  const handleImportComplete = () => {
+    setRefreshKey(prev => prev + 1);
+    if (selectedProductId) {
+      fetchDyeingCosts(selectedProductId);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -235,15 +243,20 @@ export const DyeingCostsTab = () => {
   );
 
   return (
-    <Card className="bg-card/95 border-military/30">
-      <CardHeader>
-        <CardTitle className="font-poppins text-xl text-card-foreground flex items-center gap-2">
-          <Palette className="w-5 h-5 text-accent" />
-          Custos de Tinturaria por Artigo
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Product Selection */}
+    <div className="space-y-6">
+      {/* Import Section */}
+      <DyeingCostsImport onImportComplete={handleImportComplete} />
+      
+      {/* Manual Management Section */}
+      <Card className="bg-card/95 border-military/30">
+        <CardHeader>
+          <CardTitle className="font-poppins text-xl text-card-foreground flex items-center gap-2">
+            <Palette className="w-5 h-5 text-accent" />
+            Gerenciamento Manual de Custos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Product Selection */}
         <div className="space-y-2">
           <Label>Selecione o Artigo/Produto</Label>
           <Select value={selectedProductId} onValueChange={setSelectedProductId}>
@@ -413,8 +426,9 @@ export const DyeingCostsTab = () => {
               )}
             </div>
           </>
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
