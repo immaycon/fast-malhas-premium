@@ -76,8 +76,8 @@ const Admin = () => {
           transition={{ duration: 0.5 }}
         >
           <Tabs defaultValue="calculator" className="w-full">
-            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-8">
-              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-4 bg-charcoal/50 border border-military/30 gap-1 p-1">
+            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-8 scrollbar-hide">
+              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-4 bg-charcoal/50 border border-military/30 gap-1 p-1 overflow-hidden">
                 <TabsTrigger 
                   value="calculator" 
                   className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
