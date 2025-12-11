@@ -1,73 +1,78 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface ColorItem {
-  name: string;
-  hex: string;
-  tone: "especial" | "normal" | "programavel";
-  scale: "amarelo" | "azul" | "bege" | "branco" | "cinza" | "laranja" | "marrom" | "preto" | "rosa" | "roxo" | "verde" | "vermelho";
-}
-
-const colorDatabase: ColorItem[] = [
-  { name: "Preto", hex: "#000000", tone: "normal", scale: "preto" },
-  { name: "Branco", hex: "#FFFFFF", tone: "normal", scale: "branco" },
-  { name: "Cinza Mescla", hex: "#888888", tone: "normal", scale: "cinza" },
-  { name: "Cinza Escuro", hex: "#4A4A4A", tone: "normal", scale: "cinza" },
-  { name: "Azul Marinho", hex: "#001F3F", tone: "normal", scale: "azul" },
-  { name: "Azul Royal", hex: "#0074D9", tone: "especial", scale: "azul" },
-  { name: "Azul Petróleo", hex: "#2C5F77", tone: "programavel", scale: "azul" },
-  { name: "Azul Claro", hex: "#7FDBFF", tone: "normal", scale: "azul" },
-  { name: "Verde Militar", hex: "#3D5A3D", tone: "especial", scale: "verde" },
-  { name: "Verde Bandeira", hex: "#009B3A", tone: "normal", scale: "verde" },
-  { name: "Verde Limão", hex: "#B8E986", tone: "programavel", scale: "verde" },
-  { name: "Vermelho Ferrari", hex: "#C8102E", tone: "especial", scale: "vermelho" },
-  { name: "Vermelho Cardinal", hex: "#8B0000", tone: "normal", scale: "vermelho" },
-  { name: "Bordô", hex: "#6B1C23", tone: "programavel", scale: "vermelho" },
-  { name: "Rosa Pink", hex: "#FF1493", tone: "especial", scale: "rosa" },
-  { name: "Rosa Claro", hex: "#FFB6C1", tone: "normal", scale: "rosa" },
-  { name: "Rosa Antigo", hex: "#C4A4A4", tone: "programavel", scale: "rosa" },
-  { name: "Laranja", hex: "#FF8C00", tone: "normal", scale: "laranja" },
-  { name: "Laranja Queimado", hex: "#CC5500", tone: "especial", scale: "laranja" },
-  { name: "Amarelo Ouro", hex: "#FFD700", tone: "especial", scale: "amarelo" },
-  { name: "Amarelo Canário", hex: "#FFEF00", tone: "normal", scale: "amarelo" },
-  { name: "Bege", hex: "#D4C5B9", tone: "normal", scale: "bege" },
-  { name: "Marrom Café", hex: "#6F4E37", tone: "programavel", scale: "marrom" },
-  { name: "Roxo", hex: "#800080", tone: "especial", scale: "roxo" },
-  { name: "Lilás", hex: "#C8A2C8", tone: "normal", scale: "roxo" },
+// Color data with image paths
+const colorDatabase = [
+  { name: "Aço", image: "/colors/aco.png" },
+  { name: "Amarelo Biscoito", image: "/colors/amarelo-biscoito.png" },
+  { name: "Amêndoa", image: "/colors/amendoa.jpg" },
+  { name: "Aquaril", image: "/colors/aquaril.png" },
+  { name: "Atalaia", image: "/colors/atalaia.png" },
+  { name: "Azulejo", image: "/colors/azulejo.png" },
+  { name: "Bandana", image: "/colors/bandana.png" },
+  { name: "Bege", image: "/colors/bege.png" },
+  { name: "Bic Lace", image: "/colors/bic-lace.png" },
+  { name: "Branco", image: "/colors/branco.png" },
+  { name: "Callas Marrocos", image: "/colors/callas-marrocos.png" },
+  { name: "Canela", image: "/colors/canela.png" },
+  { name: "Chronos", image: "/colors/chronos.png" },
+  { name: "Coral", image: "/colors/coral.png" },
+  { name: "Cru Lavação", image: "/colors/cru-lavacao.png" },
+  { name: "Dusk", image: "/colors/dusk.png" },
+  { name: "Eros", image: "/colors/eros.png" },
+  { name: "Fantástico", image: "/colors/fantastico.png" },
+  { name: "Florence", image: "/colors/florence.png" },
+  { name: "Floresta", image: "/colors/floresta.png" },
+  { name: "Frozen", image: "/colors/frozen.png" },
+  { name: "Fúcsia", image: "/colors/fuscsia.png" },
+  { name: "Herança", image: "/colors/heranca.png" },
+  { name: "Íris", image: "/colors/iris.png" },
+  { name: "Laranja", image: "/colors/laranja.png" },
+  { name: "Lichia", image: "/colors/lichia.png" },
+  { name: "Lipstick", image: "/colors/lipstick.png" },
+  { name: "Loteria", image: "/colors/loteria.png" },
+  { name: "Louise", image: "/colors/louise.png" },
+  { name: "Luciana", image: "/colors/luciana.png" },
+  { name: "Major", image: "/colors/major.png" },
+  { name: "Marfim", image: "/colors/marfim.png" },
+  { name: "Marinho", image: "/colors/marinho.png" },
+  { name: "Marrom Coffee", image: "/colors/marrom-coffee.png" },
+  { name: "Mastruz", image: "/colors/mastruz.png" },
+  { name: "Mocassim", image: "/colors/mocassim.png" },
+  { name: "Mocha Mousse", image: "/colors/mocha-mousse.png" },
+  { name: "Morado", image: "/colors/morado.png" },
+  { name: "Ninfa", image: "/colors/ninfa.png" },
+  { name: "Odalisca", image: "/colors/odalisca.png" },
+  { name: "Pantera", image: "/colors/pantera.png" },
+  { name: "Pimenta Ruby", image: "/colors/pimenta-ruby.png" },
+  { name: "Preto", image: "/colors/preto.png" },
+  { name: "Racy Pink", image: "/colors/racy-pink.png" },
+  { name: "Romance Bubblegum", image: "/colors/romance-bubblegum.png" },
+  { name: "Rosa BB", image: "/colors/rosa-bb.png" },
+  { name: "Rouse Delicate", image: "/colors/rouse-delicate.png" },
+  { name: "Royal 2", image: "/colors/royal-2.png" },
+  { name: "Royal", image: "/colors/royal.png" },
+  { name: "Rubro", image: "/colors/rubro.png" },
+  { name: "Sandia", image: "/colors/sandia.png" },
+  { name: "Sanremo", image: "/colors/sanremo.png" },
+  { name: "Satim Tulipero", image: "/colors/satim-tulipero.png" },
+  { name: "Tame", image: "/colors/tame.png" },
+  { name: "Teos", image: "/colors/teos.png" },
+  { name: "Terra", image: "/colors/terra.png" },
+  { name: "Tibeton", image: "/colors/tibeton.png" },
+  { name: "Turquesa", image: "/colors/turquesa.png" },
+  { name: "Verde Oliva", image: "/colors/verde-oliva.png" },
+  { name: "Verde TW", image: "/colors/verde-tw.png" },
+  { name: "Vermelho", image: "/colors/vermelho.png" },
 ];
 
 export default function Colors() {
-  const [selectedScales, setSelectedScales] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const scales = [
-    { value: "amarelo", label: "Amarelo" },
-    { value: "azul", label: "Azul" },
-    { value: "bege", label: "Bege" },
-    { value: "branco", label: "Branco" },
-    { value: "cinza", label: "Cinza" },
-    { value: "laranja", label: "Laranja" },
-    { value: "marrom", label: "Marrom" },
-    { value: "preto", label: "Preto" },
-    { value: "rosa", label: "Rosa" },
-    { value: "roxo", label: "Roxo" },
-    { value: "verde", label: "Verde" },
-    { value: "vermelho", label: "Vermelho" },
-  ];
-
-  const toggleFilter = (value: string) => {
-    setSelectedScales(prev =>
-      prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]
-    );
-  };
-
-  const filteredColors = colorDatabase.filter(color => {
-    const scaleMatch = selectedScales.length === 0 || selectedScales.includes(color.scale);
-    return scaleMatch;
-  });
+  const filteredColors = colorDatabase.filter(color =>
+    color.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,88 +100,59 @@ export default function Colors() {
         </div>
 
         <div className="container mx-auto px-4 py-12">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar */}
-            <aside className="lg:w-64 flex-shrink-0">
-              <div className="bg-card border border-border rounded-lg p-6 sticky top-24">
-                <h2 className="font-poppins text-xl font-bold text-card-foreground mb-6">
-                  Filtros
-                </h2>
-
-                {/* Escala de Cores */}
-                <div>
-                  <h3 className="font-poppins text-sm font-bold text-foreground mb-4 uppercase tracking-wide">
-                    Escala de Cores
-                  </h3>
-                  <ScrollArea className="h-80">
-                    <div className="space-y-3 pr-4">
-                      {scales.map(scale => (
-                        <div key={scale.value} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`scale-${scale.value}`}
-                            checked={selectedScales.includes(scale.value)}
-                            onCheckedChange={() => toggleFilter(scale.value)}
-                          />
-                          <Label
-                            htmlFor={`scale-${scale.value}`}
-                            className="text-sm font-medium cursor-pointer"
-                          >
-                            {scale.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            </aside>
-
-            {/* Color Grid */}
-            <div className="flex-1">
-              <div className="mb-6">
-                <p className="text-muted-foreground">
-                  Exibindo <span className="font-bold text-foreground">{filteredColors.length}</span> cores
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredColors.map((color, index) => (
-                  <motion.div
-                    key={`${color.name}-${index}`}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.02 }}
-                    className="group cursor-pointer"
-                  >
-                    <div className="bg-card border border-border rounded-lg overflow-hidden shadow-card hover:shadow-premium transition-all duration-300 hover:scale-105">
-                      <div
-                        className="h-32 flex items-center justify-center relative"
-                        style={{ backgroundColor: color.hex }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
-                      </div>
-                      <div className="p-4 text-center">
-                        <p className="font-poppins font-bold text-sm text-card-foreground">
-                          {color.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1 font-mono">
-                          {color.hex}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {filteredColors.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="text-muted-foreground text-lg">
-                    Nenhuma cor encontrada com os filtros selecionados
-                  </p>
-                </div>
-              )}
-            </div>
+          {/* Search */}
+          <div className="mb-8 max-w-md mx-auto">
+            <input
+              type="text"
+              placeholder="Buscar cor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-border bg-card text-card-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+            />
           </div>
+
+          <div className="mb-6 text-center">
+            <p className="text-muted-foreground">
+              Exibindo <span className="font-bold text-foreground">{filteredColors.length}</span> cores
+            </p>
+          </div>
+
+          {/* Color Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {filteredColors.map((color, index) => (
+              <motion.div
+                key={color.name}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3, delay: index * 0.02 }}
+                className="group"
+              >
+                <div className="bg-card border border-border rounded-lg overflow-hidden shadow-card hover:shadow-premium transition-all duration-300 hover:scale-105">
+                  <div className="aspect-square relative overflow-hidden">
+                    <img
+                      src={color.image}
+                      alt={color.name}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-3 text-center">
+                    <p className="font-poppins font-bold text-sm text-card-foreground">
+                      {color.name}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {filteredColors.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-muted-foreground text-lg">
+                Nenhuma cor encontrada
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
