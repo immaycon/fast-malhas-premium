@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { Palette, Plus, Trash2, Save, Search, Edit2, X, Factory } from 'lucide-react';
+import { DyeingCostsImport } from './DyeingCostsImport';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Tinturaria {
@@ -431,12 +432,19 @@ export const DyeingCostsTab = () => {
 
             {selectedProductId && (
               <>
-                {/* Add New Cost */}
+                {/* Import and Add New Cost */}
                 <div className="p-4 bg-military/5 rounded-lg border border-military/20 space-y-4">
-                  <h4 className="font-medium text-card-foreground flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Adicionar Novo Custo
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-card-foreground flex items-center gap-2">
+                      <Plus className="w-4 h-4" />
+                      Adicionar Novo Custo
+                    </h4>
+                    <DyeingCostsImport 
+                      tinturariaId={selectedTinturariaId}
+                      productId={selectedProductId}
+                      onImportComplete={() => fetchDyeingCosts(selectedTinturariaId, selectedProductId)}
+                    />
+                  </div>
                   <div className="flex gap-3 items-end">
                     <div className="flex-1">
                       <Label className="text-xs">Cor</Label>
