@@ -72,6 +72,7 @@ export type Database = {
           created_at: string
           id: string
           product_id: string
+          tinturaria_id: string | null
           updated_at: string
         }
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           created_at?: string
           id?: string
           product_id: string
+          tinturaria_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -88,6 +90,7 @@ export type Database = {
           created_at?: string
           id?: string
           product_id?: string
+          tinturaria_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -103,6 +106,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dyeing_costs_tinturaria_id_fkey"
+            columns: ["tinturaria_id"]
+            isOneToOne: false
+            referencedRelation: "tinturarias"
             referencedColumns: ["id"]
           },
         ]
@@ -279,6 +289,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tinturarias: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

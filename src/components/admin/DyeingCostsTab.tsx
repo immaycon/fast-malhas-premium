@@ -7,8 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Palette, Plus, Trash2, Save, Search, Edit2, X } from 'lucide-react';
-import { DyeingCostsImport } from './DyeingCostsImport';
+import { Palette, Plus, Trash2, Save, Search, Edit2, X, Factory } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+
+interface Tinturaria {
+  id: string;
+  name: string;
+}
+
 interface Product {
   id: string;
   code: string;
@@ -24,20 +30,26 @@ interface DyeingCost {
   id: string;
   product_id: string;
   color_id: string;
+  tinturaria_id: string;
   cost: number;
   color_name?: string;
 }
 
 export const DyeingCostsTab = () => {
+  const [tinturarias, setTinturarias] = useState<Tinturaria[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
+  const [selectedTinturariaId, setSelectedTinturariaId] = useState<string>('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [dyeingCosts, setDyeingCosts] = useState<DyeingCost[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchColor, setSearchColor] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCost, setEditCost] = useState('');
-  const [refreshKey, setRefreshKey] = useState(0);
+  
+  // For adding new tinturaria
+  const [newTinturariaName, setNewTinturariaName] = useState('');
+  const [addTinturariaOpen, setAddTinturariaOpen] = useState(false);
   
   // For adding new costs
   const [newColorId, setNewColorId] = useState('');
@@ -45,25 +57,30 @@ export const DyeingCostsTab = () => {
   
   const { toast } = useToast();
 
-  const handleImportComplete = () => {
-    setRefreshKey(prev => prev + 1);
-    if (selectedProductId) {
-      fetchDyeingCosts(selectedProductId);
-    }
-  };
-
   useEffect(() => {
+    fetchTinturarias();
     fetchProducts();
     fetchColors();
   }, []);
 
   useEffect(() => {
-    if (selectedProductId) {
-      fetchDyeingCosts(selectedProductId);
+    if (selectedTinturariaId && selectedProductId) {
+      fetchDyeingCosts(selectedTinturariaId, selectedProductId);
     } else {
       setDyeingCosts([]);
     }
-  }, [selectedProductId]);
+  }, [selectedTinturariaId, selectedProductId]);
+
+  const fetchTinturarias = async () => {
+    const { data, error } = await supabase
+      .from('tinturarias')
+      .select('id, name')
+      .order('name');
+    
+    if (!error && data) {
+      setTinturarias(data);
+    }
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -88,11 +105,12 @@ export const DyeingCostsTab = () => {
     }
   };
 
-  const fetchDyeingCosts = async (productId: string) => {
+  const fetchDyeingCosts = async (tinturariaId: string, productId: string) => {
     setLoading(true);
     const { data, error } = await supabase
       .from('dyeing_costs')
-      .select('id, product_id, color_id, cost, colors(name)')
+      .select('id, product_id, color_id, tinturaria_id, cost, colors(name)')
+      .eq('tinturaria_id', tinturariaId)
       .eq('product_id', productId)
       .order('cost');
     
@@ -101,6 +119,7 @@ export const DyeingCostsTab = () => {
         id: dc.id,
         product_id: dc.product_id,
         color_id: dc.color_id,
+        tinturaria_id: dc.tinturaria_id,
         cost: dc.cost,
         color_name: dc.colors?.name
       }));
@@ -109,8 +128,74 @@ export const DyeingCostsTab = () => {
     setLoading(false);
   };
 
+  const handleAddTinturaria = async () => {
+    if (!newTinturariaName.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Digite o nome da tinturaria.'
+      });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('tinturarias')
+      .insert({ name: newTinturariaName.trim() })
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message.includes('duplicate') 
+          ? 'Já existe uma tinturaria com este nome.' 
+          : 'Erro ao adicionar tinturaria.'
+      });
+    } else {
+      toast({
+        title: 'Sucesso',
+        description: 'Tinturaria adicionada.'
+      });
+      setNewTinturariaName('');
+      setAddTinturariaOpen(false);
+      fetchTinturarias();
+      if (data) {
+        setSelectedTinturariaId(data.id);
+      }
+    }
+  };
+
+  const handleDeleteTinturaria = async () => {
+    if (!selectedTinturariaId) return;
+    
+    const tinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
+    if (!confirm(`Confirma exclusão da tinturaria "${tinturaria?.name}"? Isso removerá todos os custos associados.`)) return;
+
+    const { error } = await supabase
+      .from('tinturarias')
+      .delete()
+      .eq('id', selectedTinturariaId);
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao excluir tinturaria.'
+      });
+    } else {
+      toast({
+        title: 'Sucesso',
+        description: 'Tinturaria excluída.'
+      });
+      setSelectedTinturariaId('');
+      setSelectedProductId('');
+      fetchTinturarias();
+    }
+  };
+
   const handleAddCost = async () => {
-    if (!selectedProductId || !newColorId || !newCost) {
+    if (!selectedTinturariaId || !selectedProductId || !newColorId || !newCost) {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -135,7 +220,7 @@ export const DyeingCostsTab = () => {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Esta cor já possui custo cadastrado para este artigo.'
+        description: 'Esta cor já possui custo cadastrado para este artigo nesta tinturaria.'
       });
       return;
     }
@@ -143,6 +228,7 @@ export const DyeingCostsTab = () => {
     const { error } = await supabase
       .from('dyeing_costs')
       .insert({
+        tinturaria_id: selectedTinturariaId,
         product_id: selectedProductId,
         color_id: newColorId,
         cost
@@ -161,7 +247,7 @@ export const DyeingCostsTab = () => {
       });
       setNewColorId('');
       setNewCost('');
-      fetchDyeingCosts(selectedProductId);
+      fetchDyeingCosts(selectedTinturariaId, selectedProductId);
     }
   };
 
@@ -194,7 +280,7 @@ export const DyeingCostsTab = () => {
       });
       setEditingId(null);
       setEditCost('');
-      fetchDyeingCosts(selectedProductId);
+      fetchDyeingCosts(selectedTinturariaId, selectedProductId);
     }
   };
 
@@ -217,7 +303,7 @@ export const DyeingCostsTab = () => {
         title: 'Sucesso',
         description: 'Custo excluído.'
       });
-      fetchDyeingCosts(selectedProductId);
+      fetchDyeingCosts(selectedTinturariaId, selectedProductId);
     }
   };
 
@@ -235,6 +321,7 @@ export const DyeingCostsTab = () => {
     !searchColor || dc.color_name?.toLowerCase().includes(searchColor.toLowerCase())
   );
 
+  const selectedTinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
   const selectedProduct = products.find(p => p.id === selectedProductId);
   
   // Get colors not yet added
@@ -244,191 +331,261 @@ export const DyeingCostsTab = () => {
 
   return (
     <div className="space-y-6">
-      {/* Import Section */}
-      <DyeingCostsImport onImportComplete={handleImportComplete} />
-      
-      {/* Manual Management Section */}
+      {/* Tinturaria Selection */}
       <Card className="bg-card/95 border-military/30">
         <CardHeader>
           <CardTitle className="font-poppins text-xl text-card-foreground flex items-center gap-2">
-            <Palette className="w-5 h-5 text-accent" />
-            Gerenciamento Manual de Custos
+            <Factory className="w-5 h-5 text-accent" />
+            Selecionar Tinturaria
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Product Selection */}
-        <div className="space-y-2">
-          <Label>Selecione o Artigo/Produto</Label>
-          <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-            <SelectTrigger className="bg-background border-input">
-              <SelectValue placeholder="Escolha um artigo para gerenciar custos" />
-            </SelectTrigger>
-            <SelectContent>
-              {products.map((product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.code} - {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {selectedProductId && (
-          <>
-            {/* Add New Cost */}
-            <div className="p-4 bg-military/5 rounded-lg border border-military/20 space-y-4">
-              <h4 className="font-medium text-card-foreground flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Adicionar Novo Custo
-              </h4>
-              <div className="flex gap-3 items-end">
-                <div className="flex-1">
-                  <Label className="text-xs">Cor</Label>
-                  <Select value={newColorId} onValueChange={setNewColorId}>
-                    <SelectTrigger className="bg-background border-input">
-                      <SelectValue placeholder="Selecione a cor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableColors.map((color) => (
-                        <SelectItem key={color.id} value={color.id}>
-                          {color.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-32">
-                  <Label className="text-xs">Custo (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={newCost}
-                    onChange={(e) => setNewCost(e.target.value)}
-                    className="bg-background border-input"
-                  />
-                </div>
-                <Button 
-                  onClick={handleAddCost}
-                  className="bg-accent hover:bg-accent/90"
-                >
+        <CardContent className="space-y-4">
+          <div className="flex gap-3 items-end">
+            <div className="flex-1">
+              <Label>Tinturaria</Label>
+              <Select value={selectedTinturariaId} onValueChange={(value) => {
+                setSelectedTinturariaId(value);
+                setSelectedProductId('');
+              }}>
+                <SelectTrigger className="bg-background border-input">
+                  <SelectValue placeholder="Escolha uma tinturaria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tinturarias.map((tinturaria) => (
+                    <SelectItem key={tinturaria.id} value={tinturaria.id}>
+                      {tinturaria.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Dialog open={addTinturariaOpen} onOpenChange={setAddTinturariaOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-accent text-accent hover:bg-accent/10">
                   <Plus className="w-4 h-4 mr-1" />
-                  Adicionar
+                  Nova
                 </Button>
-              </div>
-            </div>
-
-            {/* Existing Costs */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-card-foreground">
-                  Custos Cadastrados ({dyeingCosts.length} cores)
-                </h4>
-                <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Filtrar por cor..."
-                    value={searchColor}
-                    onChange={(e) => setSearchColor(e.target.value)}
-                    className="pl-9 w-48 bg-background border-input"
-                  />
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Nova Tinturaria</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div>
+                    <Label>Nome da Tinturaria</Label>
+                    <Input
+                      placeholder="Ex: Tinturaria Central"
+                      value={newTinturariaName}
+                      onChange={(e) => setNewTinturariaName(e.target.value)}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                  <Button onClick={handleAddTinturaria} className="w-full bg-accent hover:bg-accent/90">
+                    <Plus className="w-4 h-4 mr-1" />
+                    Adicionar Tinturaria
+                  </Button>
                 </div>
-              </div>
-
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  Carregando...
-                </div>
-              ) : filteredCosts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {dyeingCosts.length === 0 
-                    ? 'Nenhum custo cadastrado para este artigo.'
-                    : 'Nenhuma cor encontrada com este filtro.'}
-                </div>
-              ) : (
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-military/5">
-                        <TableHead>Cor</TableHead>
-                        <TableHead className="text-right">Custo (R$)</TableHead>
-                        <TableHead className="w-24 text-center">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCosts.map((dc) => (
-                        <TableRow key={dc.id}>
-                          <TableCell className="font-medium">{dc.color_name}</TableCell>
-                          <TableCell className="text-right">
-                            {editingId === dc.id ? (
-                              <Input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={editCost}
-                                onChange={(e) => setEditCost(e.target.value)}
-                                className="w-24 ml-auto bg-background border-input"
-                                autoFocus
-                              />
-                            ) : (
-                              <span>R$ {dc.cost.toFixed(2)}</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-center gap-1">
-                              {editingId === dc.id ? (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleUpdateCost(dc.id)}
-                                    className="h-8 w-8 text-accent hover:bg-accent/10"
-                                  >
-                                    <Save className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={cancelEditing}
-                                    className="h-8 w-8 text-muted-foreground hover:bg-muted"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </Button>
-                                </>
-                              ) : (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => startEditing(dc)}
-                                    className="h-8 w-8 text-muted-foreground hover:text-accent hover:bg-accent/10"
-                                  >
-                                    <Edit2 className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteCost(dc.id)}
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          </>
-          )}
+              </DialogContent>
+            </Dialog>
+            
+            {selectedTinturariaId && (
+              <Button 
+                variant="outline" 
+                className="border-destructive text-destructive hover:bg-destructive/10"
+                onClick={handleDeleteTinturaria}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Product Selection and Cost Management */}
+      {selectedTinturariaId && (
+        <Card className="bg-card/95 border-military/30">
+          <CardHeader>
+            <CardTitle className="font-poppins text-xl text-card-foreground flex items-center gap-2">
+              <Palette className="w-5 h-5 text-accent" />
+              Custos por Artigo - {selectedTinturaria?.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Product Selection */}
+            <div className="space-y-2">
+              <Label>Selecione o Artigo/Produto</Label>
+              <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                <SelectTrigger className="bg-background border-input">
+                  <SelectValue placeholder="Escolha um artigo para gerenciar custos" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.code} - {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedProductId && (
+              <>
+                {/* Add New Cost */}
+                <div className="p-4 bg-military/5 rounded-lg border border-military/20 space-y-4">
+                  <h4 className="font-medium text-card-foreground flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Adicionar Novo Custo
+                  </h4>
+                  <div className="flex gap-3 items-end">
+                    <div className="flex-1">
+                      <Label className="text-xs">Cor</Label>
+                      <Select value={newColorId} onValueChange={setNewColorId}>
+                        <SelectTrigger className="bg-background border-input">
+                          <SelectValue placeholder="Selecione a cor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableColors.map((color) => (
+                            <SelectItem key={color.id} value={color.id}>
+                              {color.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-32">
+                      <Label className="text-xs">Custo (R$)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        value={newCost}
+                        onChange={(e) => setNewCost(e.target.value)}
+                        className="bg-background border-input"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleAddCost}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Adicionar
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Existing Costs */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-card-foreground">
+                      Custos Cadastrados ({dyeingCosts.length} cores)
+                    </h4>
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Filtrar por cor..."
+                        value={searchColor}
+                        onChange={(e) => setSearchColor(e.target.value)}
+                        className="pl-9 w-48 bg-background border-input"
+                      />
+                    </div>
+                  </div>
+
+                  {loading ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Carregando...
+                    </div>
+                  ) : filteredCosts.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {dyeingCosts.length === 0 
+                        ? 'Nenhum custo cadastrado para este artigo nesta tinturaria.'
+                        : 'Nenhuma cor encontrada com este filtro.'}
+                    </div>
+                  ) : (
+                    <div className="border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-military/5">
+                            <TableHead>Cor</TableHead>
+                            <TableHead className="text-right">Custo (R$)</TableHead>
+                            <TableHead className="w-24 text-center">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredCosts.map((dc) => (
+                            <TableRow key={dc.id}>
+                              <TableCell className="font-medium">{dc.color_name}</TableCell>
+                              <TableCell className="text-right">
+                                {editingId === dc.id ? (
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editCost}
+                                    onChange={(e) => setEditCost(e.target.value)}
+                                    className="w-24 ml-auto bg-background border-input"
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <span>R$ {dc.cost.toFixed(2)}</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex justify-center gap-1">
+                                  {editingId === dc.id ? (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleUpdateCost(dc.id)}
+                                        className="h-8 w-8 text-accent hover:bg-accent/10"
+                                      >
+                                        <Save className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={cancelEditing}
+                                        className="h-8 w-8 text-muted-foreground hover:bg-muted"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => startEditing(dc)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-accent hover:bg-accent/10"
+                                      >
+                                        <Edit2 className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteCost(dc.id)}
+                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

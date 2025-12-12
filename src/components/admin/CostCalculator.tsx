@@ -6,13 +6,18 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Calculator, Plus, Trash2, FileText, AlertCircle, Download } from 'lucide-react';
+import { Calculator, Plus, Trash2, FileText, AlertCircle, Download, Factory } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 // Format number to Brazilian currency format (10.000,00)
 const formatBRL = (value: number): string => {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
+
+interface Tinturaria {
+  id: string;
+  name: string;
+}
 
 interface Product {
   id: string;
@@ -48,6 +53,7 @@ interface ColorEntry {
 
 interface CalculationResult {
   product: Product;
+  tinturaria: Tinturaria;
   colors: ColorEntry[];
   yarnCosts: { name: string; cost: number; proportion: number }[];
   weavingCost: number;
@@ -57,9 +63,11 @@ interface CalculationResult {
 }
 
 export const CostCalculator = () => {
+  const [tinturarias, setTinturarias] = useState<Tinturaria[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [allColors, setAllColors] = useState<Color[]>([]);
   const [productColors, setProductColors] = useState<ProductColor[]>([]);
+  const [selectedTinturariaId, setSelectedTinturariaId] = useState<string>('');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [colorEntries, setColorEntries] = useState<{ colorId: string; quantity: string }[]>([
     { colorId: '', quantity: '' }
@@ -71,18 +79,32 @@ export const CostCalculator = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    fetchTinturarias();
     fetchProducts();
     fetchAllColors();
   }, []);
 
   useEffect(() => {
-    if (selectedProductId) {
-      fetchProductColors(selectedProductId);
-      // Reset color entries when product changes
+    if (selectedTinturariaId && selectedProductId) {
+      fetchProductColors(selectedTinturariaId, selectedProductId);
+      // Reset color entries when product or tinturaria changes
       setColorEntries([{ colorId: '', quantity: '' }]);
       setResult(null);
+    } else {
+      setProductColors([]);
     }
-  }, [selectedProductId]);
+  }, [selectedTinturariaId, selectedProductId]);
+
+  const fetchTinturarias = async () => {
+    const { data, error } = await supabase
+      .from('tinturarias')
+      .select('id, name')
+      .order('name');
+
+    if (!error && data) {
+      setTinturarias(data);
+    }
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -107,14 +129,15 @@ export const CostCalculator = () => {
     }
   };
 
-  const fetchProductColors = async (productId: string) => {
+  const fetchProductColors = async (tinturariaId: string, productId: string) => {
     setLoadingColors(true);
     setProductColors([]);
     try {
-      // Fetch colors that have dyeing costs for this specific product
+      // Fetch colors that have dyeing costs for this specific product AND tinturaria
       const { data, error } = await supabase
         .from('dyeing_costs')
         .select('color_id, cost, colors(name)')
+        .eq('tinturaria_id', tinturariaId)
         .eq('product_id', productId);
 
       if (error) {
@@ -158,6 +181,15 @@ export const CostCalculator = () => {
   };
 
   const calculateCost = async () => {
+    if (!selectedTinturariaId) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Selecione uma tinturaria.'
+      });
+      return;
+    }
+
     if (!selectedProductId) {
       toast({
         variant: 'destructive',
@@ -180,7 +212,9 @@ export const CostCalculator = () => {
     setLoading(true);
     try {
       const product = products.find(p => p.id === selectedProductId);
+      const tinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
       if (!product) throw new Error('Produto não encontrado');
+      if (!tinturaria) throw new Error('Tinturaria não encontrada');
 
       // Buscar preços de fios do dia
       const today = new Date().toISOString().split('T')[0];
@@ -236,7 +270,7 @@ export const CostCalculator = () => {
       for (const entry of validEntries) {
         const productColor = productColors.find(pc => pc.color_id === entry.colorId);
         const quantity = parseFloat(entry.quantity);
-        const dyeingCost = dyeingMap[entry.colorId] || 7.62; // Default dyeing cost
+        const dyeingCost = dyeingMap[entry.colorId] || 0;
 
         // Fórmula: (Σ(Custo Fio × Proporção) + Tecelagem + Tinturaria) / Fator de Aproveitamento
         const rawCost = totalYarnCost + product.weaving_cost + dyeingCost;
@@ -260,6 +294,7 @@ export const CostCalculator = () => {
 
       setResult({
         product,
+        tinturaria,
         colors: calculatedColors,
         yarnCosts,
         weavingCost: product.weaving_cost,
@@ -280,10 +315,8 @@ export const CostCalculator = () => {
     }
   };
 
-  // Get available colors based on product
-  const availableColors = productColors.length > 0 
-    ? productColors 
-    : allColors.map(c => ({ color_id: c.id, color_name: c.name, dyeing_cost: 7.62 }));
+  // Get available colors - ONLY from productColors (tinturaria + product specific)
+  const availableColors = productColors;
 
   const generatePDF = async (type: 'pedido' | 'orcamento') => {
     if (!result || !customerName.trim()) {
@@ -367,7 +400,18 @@ export const CostCalculator = () => {
     doc.setTextColor(...textColor);
     doc.text(customerName, margin + 25, yPos);
 
-    yPos += 20;
+    yPos += 15;
+
+    // Tinturaria
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('Tinturaria:', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.text(result.tinturaria.name, margin + 28, yPos);
+
+    yPos += 15;
 
     // Product Info Box
     doc.setFillColor(245, 245, 245);
@@ -506,6 +550,9 @@ export const CostCalculator = () => {
     });
   };
 
+  const selectedProduct = products.find(p => p.id === selectedProductId);
+  const selectedTinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Input Form */}
@@ -517,12 +564,41 @@ export const CostCalculator = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Tinturaria Selection */}
+          <div className="space-y-2">
+            <Label className="text-card-foreground flex items-center gap-2">
+              <Factory className="w-4 h-4 text-accent" />
+              Tinturaria
+            </Label>
+            <Select value={selectedTinturariaId} onValueChange={(value) => {
+              setSelectedTinturariaId(value);
+              setSelectedProductId('');
+              setColorEntries([{ colorId: '', quantity: '' }]);
+              setResult(null);
+            }}>
+              <SelectTrigger className="bg-background border-input">
+                <SelectValue placeholder="Selecione a tinturaria" />
+              </SelectTrigger>
+              <SelectContent>
+                {tinturarias.map((tinturaria) => (
+                  <SelectItem key={tinturaria.id} value={tinturaria.id}>
+                    {tinturaria.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Product Selection */}
           <div className="space-y-2">
             <Label className="text-card-foreground">Produto/Artigo</Label>
-            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+            <Select 
+              value={selectedProductId} 
+              onValueChange={setSelectedProductId}
+              disabled={!selectedTinturariaId}
+            >
               <SelectTrigger className="bg-background border-input">
-                <SelectValue placeholder="Selecione o produto" />
+                <SelectValue placeholder={selectedTinturariaId ? "Selecione o produto" : "Selecione uma tinturaria primeiro"} />
               </SelectTrigger>
               <SelectContent>
                 {products.map((product) => (
@@ -534,94 +610,92 @@ export const CostCalculator = () => {
             </Select>
             {selectedProductId && (
               <p className="text-xs text-muted-foreground">
-                {products.find(p => p.id === selectedProductId)?.composition}
+                {selectedProduct?.composition}
               </p>
             )}
           </div>
 
           {/* Color Status Alert */}
-          {selectedProductId && productColors.length === 0 && !loadingColors && (
-            <div className="flex items-start gap-2 p-3 bg-accent/10 border border-accent/30 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+          {selectedTinturariaId && selectedProductId && productColors.length === 0 && !loadingColors && (
+            <div className="flex items-start gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
               <p className="text-xs text-muted-foreground">
-                Este produto não possui custos de tinturaria cadastrados. Será usado o custo padrão de R$ 7,62 por cor.
+                Este produto não possui cores cadastradas para a tinturaria "{selectedTinturaria?.name}". 
+                Cadastre as cores na aba "Tinturaria" antes de calcular.
               </p>
             </div>
           )}
 
           {/* Color Entries */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-card-foreground">
-                Cores e Quantidades
-                {productColors.length > 0 && (
+          {productColors.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-card-foreground">
+                  Cores e Quantidades
                   <span className="text-xs text-muted-foreground ml-2">
                     ({productColors.length} cores disponíveis)
                   </span>
-                )}
-              </Label>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={addColorEntry}
-                className="border-accent text-accent hover:bg-accent/10"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Adicionar Cor
-              </Button>
-            </div>
-
-            {colorEntries.map((entry, index) => (
-              <div key={index} className="flex gap-3 items-center">
-                <div className="flex-1">
-                  <Select 
-                    value={entry.colorId} 
-                    onValueChange={(value) => updateColorEntry(index, 'colorId', value)}
-                    disabled={loadingColors}
-                  >
-                    <SelectTrigger className="bg-background border-input">
-                      <SelectValue placeholder={loadingColors ? "Carregando..." : "Cor"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableColors.map((color) => (
-                        <SelectItem key={color.color_id} value={color.color_id}>
-                          {productColors.length > 0 
-                            ? `${color.color_name} - R$ ${color.dyeing_cost?.toFixed(2) || '0.00'}`
-                            : color.color_name
-                          }
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-28">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="KG"
-                    value={entry.quantity}
-                    onChange={(e) => updateColorEntry(index, 'quantity', e.target.value)}
-                    className="bg-background border-input"
-                  />
-                </div>
-                {colorEntries.length > 1 && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => removeColorEntry(index)}
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
+                </Label>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={addColorEntry}
+                  className="border-accent text-accent hover:bg-accent/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Adicionar Cor
+                </Button>
               </div>
-            ))}
-          </div>
+
+              {colorEntries.map((entry, index) => (
+                <div key={index} className="flex gap-3 items-center">
+                  <div className="flex-1">
+                    <Select 
+                      value={entry.colorId} 
+                      onValueChange={(value) => updateColorEntry(index, 'colorId', value)}
+                      disabled={loadingColors}
+                    >
+                      <SelectTrigger className="bg-background border-input">
+                        <SelectValue placeholder={loadingColors ? "Carregando..." : "Cor"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableColors.map((color) => (
+                          <SelectItem key={color.color_id} value={color.color_id}>
+                            {color.color_name} - R$ {color.dyeing_cost?.toFixed(2) || '0.00'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-28">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="KG"
+                      value={entry.quantity}
+                      onChange={(e) => updateColorEntry(index, 'quantity', e.target.value)}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                  {colorEntries.length > 1 && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => removeColorEntry(index)}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           <Button 
             onClick={calculateCost}
-            disabled={loading}
+            disabled={loading || productColors.length === 0}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold"
           >
             {loading ? 'Calculando...' : 'Calcular Custo'}
@@ -640,6 +714,14 @@ export const CostCalculator = () => {
         <CardContent>
           {result ? (
             <div className="space-y-6">
+              {/* Tinturaria Info */}
+              <div className="p-3 bg-accent/10 rounded-lg border border-accent/20">
+                <div className="flex items-center gap-2">
+                  <Factory className="w-4 h-4 text-accent" />
+                  <span className="font-medium text-card-foreground">Tinturaria: {result.tinturaria.name}</span>
+                </div>
+              </div>
+
               {/* Product Info */}
               <div className="p-4 bg-military/10 rounded-lg border border-military/20">
                 <h4 className="font-poppins font-bold text-card-foreground">
@@ -739,7 +821,7 @@ export const CostCalculator = () => {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Calculator className="w-12 h-12 mx-auto mb-4 opacity-30" />
-              <p>Selecione um produto e adicione cores para calcular o custo.</p>
+              <p>Selecione uma tinturaria, produto e adicione cores para calcular o custo.</p>
             </div>
           )}
         </CardContent>
