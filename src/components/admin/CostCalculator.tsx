@@ -186,61 +186,49 @@ export const CostCalculator = () => {
       const today = new Date().toISOString().split('T')[0];
       const { data: yarnPrices, error: yarnError } = await supabase
         .from('yarn_prices')
-        .select('yarn_type_id, price, yarn_types(name)')
+        .select('yarn_type_id, price')
         .eq('effective_date', today);
 
       if (yarnError) throw yarnError;
 
-      // Calcular custo base dos fios (usando valores padrão baseados na composição)
+      // Buscar composição de fios do produto (product_yarns)
+      const { data: productYarns, error: productYarnsError } = await supabase
+        .from('product_yarns')
+        .select('proportion, yarn_types(id, name)')
+        .eq('product_id', product.id);
+
+      if (productYarnsError) throw productYarnsError;
+
+      // Mapear preços por ID de tipo de fio
+      const priceMap: Record<string, number> = {};
+      yarnPrices?.forEach((yp: any) => {
+        if (yp.yarn_type_id) {
+          priceMap[yp.yarn_type_id] = Number(yp.price) || 0;
+        }
+      });
+
+      // Calcular custo base dos fios a partir da tabela product_yarns
       const yarnCosts: { name: string; cost: number; proportion: number }[] = [];
       let totalYarnCost = 0;
 
-      // Parse composition to get yarn proportions
-      const composition = product.composition || '';
-      const hasPoliester = composition.toLowerCase().includes('poliéster') || composition.toLowerCase().includes('poliester');
-      const hasPoliamida = composition.toLowerCase().includes('poliamida');
-      const hasElastano = composition.toLowerCase().includes('elastano');
-      const hasAlgodao = composition.toLowerCase().includes('algodão');
+      (productYarns || []).forEach((py: any) => {
+        const yarnTypeId = py.yarn_types?.id;
+        const yarnName = py.yarn_types?.name || 'Fio';
+        const proportion = Number(py.proportion) || 0;
+        const unitPrice = yarnTypeId ? priceMap[yarnTypeId] || 0 : 0;
+        const contribution = unitPrice * proportion;
 
-      // Get yarn prices
-      const priceMap: Record<string, number> = {};
-      yarnPrices?.forEach((yp: any) => {
-        priceMap[yp.yarn_types?.name || ''] = yp.price;
+        yarnCosts.push({ name: yarnName, cost: unitPrice, proportion });
+        totalYarnCost += contribution;
       });
 
-      // Calculate based on composition pattern (simplified - you'd want more sophisticated parsing)
-      if (hasPoliester) {
-        const poliesterPrice = priceMap['Poliéster'] || 0;
-        const proportion = hasElastano ? 0.94 : 1;
-        yarnCosts.push({ name: 'Poliéster', cost: poliesterPrice, proportion });
-        totalYarnCost += poliesterPrice * proportion;
-      }
-      if (hasPoliamida) {
-        const poliamidaPrice = priceMap['Poliamida'] || 0;
-        const proportion = hasElastano ? 0.91 : 1;
-        yarnCosts.push({ name: 'Poliamida', cost: poliamidaPrice, proportion });
-        totalYarnCost += poliamidaPrice * proportion;
-      }
-      if (hasAlgodao) {
-        const algodaoPrice = priceMap['Algodão'] || 0;
-        const proportion = hasElastano ? 0.96 : 1;
-        yarnCosts.push({ name: 'Algodão', cost: algodaoPrice, proportion });
-        totalYarnCost += algodaoPrice * proportion;
-      }
-      if (hasElastano) {
-        const elastanoPrice = priceMap['Elastano 20'] || priceMap['Elastano 40'] || 0;
-        const proportion = 1 - (yarnCosts[0]?.proportion || 0);
-        yarnCosts.push({ name: 'Elastano', cost: elastanoPrice, proportion });
-        totalYarnCost += elastanoPrice * proportion;
-      }
-
-      // Build dyeing cost map from product colors
+      // Mapa de custos de tingimento por cor
       const dyeingMap: Record<string, number> = {};
       productColors.forEach((pc) => {
         dyeingMap[pc.color_id] = pc.dyeing_cost;
       });
 
-      // Calculate per color
+      // Calcular por cor
       const calculatedColors: ColorEntry[] = [];
       let totalKg = 0;
       let totalValue = 0;
