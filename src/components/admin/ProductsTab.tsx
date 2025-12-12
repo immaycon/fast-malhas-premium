@@ -5,8 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Edit2, Save, X, FileDown, CheckSquare, Square } from 'lucide-react';
+import { Search, Edit2, Save, X, FileDown, CheckSquare, Square, Lock, Unlock } from 'lucide-react';
 import { generateProductsPDF } from './ProductsPDF';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 interface Product {
   id: string;
@@ -21,6 +28,8 @@ interface Product {
   is_active: boolean;
 }
 
+const EDIT_PASSWORD = '151127';
+
 export const ProductsTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
@@ -29,6 +38,10 @@ export const ProductsTab = () => {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [password, setPassword] = useState('');
+  const [pendingEditProduct, setPendingEditProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   const fetchProducts = async () => {
@@ -53,11 +66,53 @@ export const ProductsTab = () => {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleEditClick = (product: Product) => {
+    if (isUnlocked) {
+      startEditing(product);
+    } else {
+      setPendingEditProduct(product);
+      setShowPasswordDialog(true);
+    }
+  };
+
   const startEditing = (product: Product) => {
     setEditingId(product.id);
     setEditData({
       efficiency_factor: product.efficiency_factor,
       weaving_cost: product.weaving_cost
+    });
+  };
+
+  const handlePasswordSubmit = () => {
+    if (password === EDIT_PASSWORD) {
+      setIsUnlocked(true);
+      setShowPasswordDialog(false);
+      setPassword('');
+      if (pendingEditProduct) {
+        startEditing(pendingEditProduct);
+        setPendingEditProduct(null);
+      }
+      toast({
+        title: 'Desbloqueado!',
+        description: 'Você pode editar os produtos agora.'
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Senha incorreta',
+        description: 'A senha informada está incorreta.'
+      });
+      setPassword('');
+    }
+  };
+
+  const handleLock = () => {
+    setIsUnlocked(false);
+    setEditingId(null);
+    setEditData({});
+    toast({
+      title: 'Bloqueado',
+      description: 'Edição de produtos bloqueada.'
     });
   };
 
@@ -156,11 +211,66 @@ export const ProductsTab = () => {
   const allSelected = filteredProducts.length > 0 && selectedIds.size === filteredProducts.length;
 
   return (
-    <Card className="bg-card/95 border-military/30">
-      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="font-poppins text-xl text-card-foreground">
-          Produtos ({products.length})
-        </CardTitle>
+    <>
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              Senha de Edição
+            </DialogTitle>
+            <DialogDescription>
+              Digite a senha para desbloquear a edição de produtos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <Input
+              type="password"
+              placeholder="Digite a senha..."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+              autoFocus
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => {
+                setShowPasswordDialog(false);
+                setPassword('');
+                setPendingEditProduct(null);
+              }}>
+                Cancelar
+              </Button>
+              <Button onClick={handlePasswordSubmit} className="bg-accent hover:bg-accent/90">
+                Desbloquear
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Card className="bg-card/95 border-military/30">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <CardTitle className="font-poppins text-xl text-card-foreground">
+              Produtos ({products.length})
+            </CardTitle>
+            {isUnlocked ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLock}
+                className="text-green-500 hover:text-green-400"
+              >
+                <Unlock className="w-4 h-4 mr-1" />
+                Desbloqueado
+              </Button>
+            ) : (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                Bloqueado
+              </span>
+            )}
+          </div>
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -296,10 +406,10 @@ export const ProductsTab = () => {
                         <Button 
                           size="icon" 
                           variant="ghost" 
-                          className="h-8 w-8 text-accent hover:text-accent/80"
-                          onClick={() => startEditing(product)}
+                          className={`h-8 w-8 ${isUnlocked ? 'text-accent hover:text-accent/80' : 'text-muted-foreground hover:text-card-foreground'}`}
+                          onClick={() => handleEditClick(product)}
                         >
-                          <Edit2 className="w-4 h-4" />
+                          {isUnlocked ? <Edit2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                         </Button>
                       </td>
                     </>
@@ -311,5 +421,6 @@ export const ProductsTab = () => {
         </div>
       </CardContent>
     </Card>
+    </>
   );
 };
