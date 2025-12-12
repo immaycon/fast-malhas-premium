@@ -123,17 +123,15 @@ export const YarnPricesTab = ({ isAdmin }: YarnPricesTabProps) => {
     return <div className="text-cream text-center py-8">Carregando...</div>;
   }
 
-  // Separar FRETE dos outros fios
-  const freightYarn = yarnTypes.find(y => y.name === 'FRETE');
-  const regularYarns = yarnTypes.filter(y => y.name !== 'FRETE');
-  const elastanos = regularYarns.filter(y => y.name.startsWith('Elastano'));
-  const fios = regularYarns.filter(y => !y.name.startsWith('Elastano'));
+  // Separar elastanos dos fios
+  const elastanos = yarnTypes.filter(y => y.name.startsWith('Elastano'));
+  const fios = yarnTypes.filter(y => !y.name.startsWith('Elastano'));
 
   return (
     <Card className="bg-card/95 border-military/30">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-poppins text-xl text-card-foreground">
-          Preços dos Fios e Frete (R$/KG)
+          Preços dos Fios (R$/KG)
         </CardTitle>
         <div className="flex gap-2">
           <Button 
@@ -162,33 +160,6 @@ export const YarnPricesTab = ({ isAdmin }: YarnPricesTabProps) => {
         <p className="text-sm text-muted-foreground">
           Data de referência: {new Date().toLocaleDateString('pt-BR')}
         </p>
-
-        {/* Frete - Destacado */}
-        {freightYarn && (
-          <div className="p-4 bg-accent/10 rounded-lg border-2 border-accent/30">
-            <h3 className="font-semibold text-card-foreground mb-3">Frete</h3>
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="text-sm font-medium text-card-foreground">
-                  {freightYarn.name}
-                </label>
-                <p className="text-xs text-muted-foreground">{freightYarn.unit}</p>
-              </div>
-              <div className="w-32">
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={prices[freightYarn.id] || ''}
-                  onChange={(e) => handlePriceChange(freightYarn.id, e.target.value)}
-                  disabled={!isAdmin}
-                  className="bg-background border-accent text-right"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Fios de Poliéster/Poliamida */}
         <div>

@@ -107,6 +107,30 @@ export type Database = {
           },
         ]
       }
+      freight_prices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effective_date: string
+          id: string
+          price: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          price: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effective_date?: string
+          id?: string
+          price?: number
+        }
+        Relationships: []
+      }
       product_yarns: {
         Row: {
           created_at: string
