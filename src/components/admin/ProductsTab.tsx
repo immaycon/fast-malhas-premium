@@ -3,8 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Edit2, Save, X } from 'lucide-react';
+import { Search, Edit2, Save, X, FileDown, CheckSquare, Square } from 'lucide-react';
+import { generateProductsPDF } from './ProductsPDF';
 
 interface Product {
   id: string;
@@ -25,6 +27,8 @@ export const ProductsTab = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Product>>({});
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [generatingPDF, setGeneratingPDF] = useState(false);
   const { toast } = useToast();
 
   const fetchProducts = async () => {
@@ -91,24 +95,104 @@ export const ProductsTab = () => {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredProducts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
+  const handleExportPDF = async (exportAll: boolean) => {
+    setGeneratingPDF(true);
+    try {
+      const productsToExport = exportAll 
+        ? filteredProducts 
+        : filteredProducts.filter(p => selectedIds.has(p.id));
+      
+      if (productsToExport.length === 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Atenção',
+          description: 'Selecione pelo menos um produto para exportar.'
+        });
+        return;
+      }
+
+      await generateProductsPDF(
+        productsToExport,
+        exportAll ? 'Relação Completa de Artigos' : `Artigos Selecionados (${productsToExport.length})`
+      );
+
+      toast({
+        title: 'PDF Gerado!',
+        description: `Exportados ${productsToExport.length} artigos.`
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao gerar PDF.'
+      });
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-cream text-center py-8">Carregando...</div>;
   }
 
+  const allSelected = filteredProducts.length > 0 && selectedIds.size === filteredProducts.length;
+
   return (
     <Card className="bg-card/95 border-military/30">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="font-poppins text-xl text-card-foreground">
           Produtos ({products.length})
         </CardTitle>
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar produto..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 bg-background border-input"
-          />
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar produto..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 bg-background border-input"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExportPDF(true)}
+              disabled={generatingPDF}
+              className="flex-1 sm:flex-none"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              PDF Todos
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleExportPDF(false)}
+              disabled={generatingPDF || selectedIds.size === 0}
+              className="flex-1 sm:flex-none bg-accent hover:bg-accent/90"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              PDF Selecionados ({selectedIds.size})
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -116,6 +200,20 @@ export const ProductsTab = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-military/30">
+                <th className="text-left py-3 px-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={toggleSelectAll}
+                  >
+                    {allSelected ? (
+                      <CheckSquare className="w-4 h-4 text-accent" />
+                    ) : (
+                      <Square className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </th>
                 <th className="text-left py-3 px-2 text-muted-foreground font-medium">Código</th>
                 <th className="text-left py-3 px-2 text-muted-foreground font-medium">Nome</th>
                 <th className="text-left py-3 px-2 text-muted-foreground font-medium">Composição</th>
@@ -130,6 +228,12 @@ export const ProductsTab = () => {
             <tbody>
               {filteredProducts.map((product) => (
                 <tr key={product.id} className="border-b border-military/10 hover:bg-military/5">
+                  <td className="py-3 px-2">
+                    <Checkbox
+                      checked={selectedIds.has(product.id)}
+                      onCheckedChange={() => toggleSelect(product.id)}
+                    />
+                  </td>
                   <td className="py-3 px-2 font-medium text-card-foreground">{product.code}</td>
                   <td className="py-3 px-2 text-card-foreground max-w-xs truncate">{product.name}</td>
                   <td className="py-3 px-2 text-muted-foreground text-xs max-w-xs truncate">
