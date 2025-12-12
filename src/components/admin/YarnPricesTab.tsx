@@ -123,11 +123,17 @@ export const YarnPricesTab = ({ isAdmin }: YarnPricesTabProps) => {
     return <div className="text-cream text-center py-8">Carregando...</div>;
   }
 
+  // Separar FRETE dos outros fios
+  const freightYarn = yarnTypes.find(y => y.name === 'FRETE');
+  const regularYarns = yarnTypes.filter(y => y.name !== 'FRETE');
+  const elastanos = regularYarns.filter(y => y.name.startsWith('Elastano'));
+  const fios = regularYarns.filter(y => !y.name.startsWith('Elastano'));
+
   return (
     <Card className="bg-card/95 border-military/30">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="font-poppins text-xl text-card-foreground">
-          Preços dos Fios (R$/KG)
+          Preços dos Fios e Frete (R$/KG)
         </CardTitle>
         <div className="flex gap-2">
           <Button 
@@ -152,22 +158,21 @@ export const YarnPricesTab = ({ isAdmin }: YarnPricesTabProps) => {
           )}
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-6">
+      <CardContent className="space-y-6">
+        <p className="text-sm text-muted-foreground">
           Data de referência: {new Date().toLocaleDateString('pt-BR')}
         </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {yarnTypes.map((yarn) => (
-            <div 
-              key={yarn.id} 
-              className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-military/20"
-            >
+
+        {/* Frete - Destacado */}
+        {freightYarn && (
+          <div className="p-4 bg-accent/10 rounded-lg border-2 border-accent/30">
+            <h3 className="font-semibold text-card-foreground mb-3">Frete</h3>
+            <div className="flex items-center gap-3">
               <div className="flex-1">
                 <label className="text-sm font-medium text-card-foreground">
-                  {yarn.name}
+                  {freightYarn.name}
                 </label>
-                <p className="text-xs text-muted-foreground">{yarn.unit}</p>
+                <p className="text-xs text-muted-foreground">{freightYarn.unit}</p>
               </div>
               <div className="w-32">
                 <Input
@@ -175,14 +180,78 @@ export const YarnPricesTab = ({ isAdmin }: YarnPricesTabProps) => {
                   step="0.01"
                   min="0"
                   placeholder="0.00"
-                  value={prices[yarn.id] || ''}
-                  onChange={(e) => handlePriceChange(yarn.id, e.target.value)}
+                  value={prices[freightYarn.id] || ''}
+                  onChange={(e) => handlePriceChange(freightYarn.id, e.target.value)}
                   disabled={!isAdmin}
-                  className="bg-background border-input text-right"
+                  className="bg-background border-accent text-right"
                 />
               </div>
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* Fios de Poliéster/Poliamida */}
+        <div>
+          <h3 className="font-semibold text-card-foreground mb-3">Fios</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {fios.map((yarn) => (
+              <div 
+                key={yarn.id} 
+                className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-military/20"
+              >
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-card-foreground">
+                    {yarn.name}
+                  </label>
+                  <p className="text-xs text-muted-foreground">{yarn.unit}</p>
+                </div>
+                <div className="w-32">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={prices[yarn.id] || ''}
+                    onChange={(e) => handlePriceChange(yarn.id, e.target.value)}
+                    disabled={!isAdmin}
+                    className="bg-background border-input text-right"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Elastanos */}
+        <div>
+          <h3 className="font-semibold text-card-foreground mb-3">Elastanos</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {elastanos.map((yarn) => (
+              <div 
+                key={yarn.id} 
+                className="flex items-center gap-3 p-4 bg-background/50 rounded-lg border border-military/20"
+              >
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-card-foreground">
+                    {yarn.name}
+                  </label>
+                  <p className="text-xs text-muted-foreground">{yarn.unit}</p>
+                </div>
+                <div className="w-32">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={prices[yarn.id] || ''}
+                    onChange={(e) => handlePriceChange(yarn.id, e.target.value)}
+                    disabled={!isAdmin}
+                    className="bg-background border-input text-right"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
     </Card>
