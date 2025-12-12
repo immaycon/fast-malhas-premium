@@ -65,15 +65,15 @@ export const generateProductsPDF = async (products: ProductForPDF[], title: stri
       doc.rect(marginLeft, yPos - 5, contentWidth, 8, 'F');
       
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(255, 255, 255);
       
-      doc.text('CÓDIGO', marginLeft + 2, yPos);
-      doc.text('ARTIGO', marginLeft + 25, yPos);
-      doc.text('COMPOSIÇÃO', marginLeft + 95, yPos);
-      doc.text('GRAM.', marginLeft + 145, yPos);
-      doc.text('LARG.', marginLeft + 160, yPos);
-      doc.text('REND.', marginLeft + 175, yPos);
+      doc.text('CÓD.', marginLeft + 2, yPos);
+      doc.text('ARTIGO', marginLeft + 22, yPos);
+      doc.text('COMPOSIÇÃO', marginLeft + 80, yPos);
+      doc.text('GRAM.', marginLeft + 130, yPos);
+      doc.text('LARG.', marginLeft + 148, yPos);
+      doc.text('REND.', marginLeft + 166, yPos);
       
       yPos += 8;
     };
@@ -96,7 +96,7 @@ export const generateProductsPDF = async (products: ProductForPDF[], title: stri
       }
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setTextColor(0, 100, 40);
       doc.text(product.code || '', marginLeft + 2, yPos);
 
@@ -105,19 +105,19 @@ export const generateProductsPDF = async (products: ProductForPDF[], title: stri
       
       // Name - truncate if too long
       const name = product.name || '';
-      const truncatedName = name.length > 35 ? name.substring(0, 35) + '...' : name;
-      doc.text(truncatedName, marginLeft + 25, yPos);
+      const truncatedName = name.length > 28 ? name.substring(0, 28) + '...' : name;
+      doc.text(truncatedName, marginLeft + 22, yPos);
       
       // Composition - truncate
       const composition = product.composition || '';
-      const truncatedComp = composition.length > 25 ? composition.substring(0, 25) + '...' : composition;
-      doc.setFontSize(7);
-      doc.text(truncatedComp, marginLeft + 95, yPos);
+      const truncatedComp = composition.length > 22 ? composition.substring(0, 22) + '...' : composition;
+      doc.setFontSize(6);
+      doc.text(truncatedComp, marginLeft + 80, yPos);
       
-      doc.setFontSize(8);
-      doc.text(product.weight_gsm?.toString() || '-', marginLeft + 147, yPos);
-      doc.text(product.width_cm?.toString() || '-', marginLeft + 162, yPos);
-      doc.text(product.yield_m_kg?.toString() || '-', marginLeft + 177, yPos);
+      doc.setFontSize(7);
+      doc.text(product.weight_gsm?.toString() || '-', marginLeft + 132, yPos);
+      doc.text(product.width_cm?.toString() || '-', marginLeft + 150, yPos);
+      doc.text(product.yield_m_kg?.toString() || '-', marginLeft + 168, yPos);
 
       yPos += lineHeight;
     });
