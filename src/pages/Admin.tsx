@@ -5,10 +5,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Calculator, Package, DollarSign, Home, PaintBucket } from 'lucide-react';
+import { LogOut, Calculator, Package, DollarSign, Home, PaintBucket, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import logoImage from '@/assets/fast-malhas-logo.png';
 import { YarnPricesTab } from '@/components/admin/YarnPricesTab';
+import { FreightTab } from '@/components/admin/FreightTab';
 import { CostCalculator } from '@/components/admin/CostCalculator';
 import { ProductsTab } from '@/components/admin/ProductsTab';
 import { DyeingCostsTab } from '@/components/admin/DyeingCostsTab';
@@ -77,7 +78,7 @@ const Admin = () => {
         >
           <Tabs defaultValue="calculator" className="w-full">
             <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-8 scrollbar-hide">
-              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-4 bg-charcoal/50 border border-military/30 gap-1 p-1 overflow-hidden">
+              <TabsList className="inline-flex w-auto min-w-full md:w-full md:grid md:grid-cols-5 bg-charcoal/50 border border-military/30 gap-1 p-1 overflow-hidden">
                 <TabsTrigger 
                   value="calculator" 
                   className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
@@ -93,6 +94,14 @@ const Admin = () => {
                   <DollarSign className="w-4 h-4 mr-1 md:mr-2" />
                   <span className="hidden sm:inline">Preços Fios</span>
                   <span className="sm:hidden">Fios</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="freight"
+                  className="font-poppins text-xs md:text-sm whitespace-nowrap px-3 md:px-4 py-2 data-[state=active]:bg-accent data-[state=active]:text-accent-foreground"
+                >
+                  <Truck className="w-4 h-4 mr-1 md:mr-2" />
+                  <span className="hidden sm:inline">Frete</span>
+                  <span className="sm:hidden">Frete</span>
                 </TabsTrigger>
                 {isAdmin && (
                   <>
@@ -123,6 +132,10 @@ const Admin = () => {
 
             <TabsContent value="yarns">
               <YarnPricesTab isAdmin={isAdmin} />
+            </TabsContent>
+
+            <TabsContent value="freight">
+              <FreightTab isAdmin={isAdmin} />
             </TabsContent>
 
             {isAdmin && (
