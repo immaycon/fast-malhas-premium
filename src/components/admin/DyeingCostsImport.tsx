@@ -119,6 +119,7 @@ export const DyeingCostsImport = ({ tinturariaId, productId, onImportComplete }:
       let imported = 0;
       let created = 0;
       let skipped = 0;
+      const errors: string[] = [];
 
       for (const item of parsedPreview) {
         const normalizedName = item.colorName.toLowerCase().trim();
@@ -128,12 +129,12 @@ export const DyeingCostsImport = ({ tinturariaId, productId, onImportComplete }:
         if (!colorId) {
           const { data: newColor, error: createError } = await supabase
             .from('colors')
-            .insert({ name: item.colorName.toUpperCase() })
+            .insert({ name: item.colorName.toUpperCase().trim() })
             .select('id')
             .single();
 
           if (createError) {
-            console.error(`Erro ao criar cor ${item.colorName}:`, createError);
+            errors.push(`Cor "${item.colorName}": ${createError.message}`);
             skipped++;
             continue;
           }
@@ -159,7 +160,7 @@ export const DyeingCostsImport = ({ tinturariaId, productId, onImportComplete }:
             .eq('id', existingCost.id);
 
           if (updateError) {
-            console.error(`Erro ao atualizar custo de ${item.colorName}:`, updateError);
+            errors.push(`Atualizar "${item.colorName}": ${updateError.message}`);
             skipped++;
             continue;
           }
@@ -175,12 +176,16 @@ export const DyeingCostsImport = ({ tinturariaId, productId, onImportComplete }:
             });
 
           if (insertError) {
-            console.error(`Erro ao inserir custo de ${item.colorName}:`, insertError);
+            errors.push(`Inserir "${item.colorName}": ${insertError.message}`);
             skipped++;
             continue;
           }
         }
         imported++;
+      }
+
+      if (errors.length > 0) {
+        console.error('Erros na importação:', errors);
       }
 
       toast({

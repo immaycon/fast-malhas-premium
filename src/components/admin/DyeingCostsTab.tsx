@@ -53,7 +53,7 @@ export const DyeingCostsTab = () => {
   const [addTinturariaOpen, setAddTinturariaOpen] = useState(false);
   
   // For adding new costs
-  const [newColorId, setNewColorId] = useState('');
+  const [newColorName, setNewColorName] = useState('');
   const [newCost, setNewCost] = useState('');
   
   const { toast } = useToast();
@@ -196,7 +196,7 @@ export const DyeingCostsTab = () => {
   };
 
   const handleAddCost = async () => {
-    if (!selectedTinturariaId || !selectedProductId || !newColorId || !newCost) {
+    if (!selectedTinturariaId || !selectedProductId || !newColorName.trim() || !newCost) {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -206,7 +206,7 @@ export const DyeingCostsTab = () => {
     }
 
     const cost = parseFloat(newCost);
-    if (isNaN(cost) || cost <= 0) {
+    if (isNaN(cost) || cost < 0) {
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -215,8 +215,39 @@ export const DyeingCostsTab = () => {
       return;
     }
 
-    // Check if already exists
-    const exists = dyeingCosts.find(dc => dc.color_id === newColorId);
+    const colorNameNormalized = newColorName.trim().toUpperCase();
+
+    // Check if color already exists in database
+    let colorId: string | null = null;
+    const { data: existingColor } = await supabase
+      .from('colors')
+      .select('id')
+      .ilike('name', colorNameNormalized)
+      .maybeSingle();
+
+    if (existingColor) {
+      colorId = existingColor.id;
+    } else {
+      // Create new color
+      const { data: newColor, error: createError } = await supabase
+        .from('colors')
+        .insert({ name: colorNameNormalized })
+        .select('id')
+        .single();
+
+      if (createError) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Erro ao criar cor: ' + createError.message
+        });
+        return;
+      }
+      colorId = newColor.id;
+    }
+
+    // Check if dyeing cost already exists for this combo
+    const exists = dyeingCosts.find(dc => dc.color_id === colorId);
     if (exists) {
       toast({
         variant: 'destructive',
@@ -231,7 +262,7 @@ export const DyeingCostsTab = () => {
       .insert({
         tinturaria_id: selectedTinturariaId,
         product_id: selectedProductId,
-        color_id: newColorId,
+        color_id: colorId,
         cost
       });
 
@@ -246,9 +277,10 @@ export const DyeingCostsTab = () => {
         title: 'Sucesso',
         description: 'Custo de tinturaria adicionado.'
       });
-      setNewColorId('');
+      setNewColorName('');
       setNewCost('');
       fetchDyeingCosts(selectedTinturariaId, selectedProductId);
+      fetchColors(); // Refresh colors list
     }
   };
 
@@ -324,11 +356,6 @@ export const DyeingCostsTab = () => {
 
   const selectedTinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
   const selectedProduct = products.find(p => p.id === selectedProductId);
-  
-  // Get colors not yet added
-  const availableColors = colors.filter(c => 
-    !dyeingCosts.find(dc => dc.color_id === c.id)
-  );
 
   return (
     <div className="space-y-6">
@@ -447,19 +474,13 @@ export const DyeingCostsTab = () => {
                   </div>
                   <div className="flex gap-3 items-end">
                     <div className="flex-1">
-                      <Label className="text-xs">Cor</Label>
-                      <Select value={newColorId} onValueChange={setNewColorId}>
-                        <SelectTrigger className="bg-background border-input">
-                          <SelectValue placeholder="Selecione a cor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableColors.map((color) => (
-                            <SelectItem key={color.id} value={color.id}>
-                              {color.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-xs">Nome da Cor</Label>
+                      <Input
+                        placeholder="Digite o nome da cor (ex: BRANCO)"
+                        value={newColorName}
+                        onChange={(e) => setNewColorName(e.target.value)}
+                        className="bg-background border-input"
+                      />
                     </div>
                     <div className="w-32">
                       <Label className="text-xs">Custo (R$)</Label>
