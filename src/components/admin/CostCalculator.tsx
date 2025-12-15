@@ -63,6 +63,25 @@ interface CalculationResult {
   totalValue: number;
 }
 
+// Fios principais que podem ser substituídos (não inclui elastano)
+const MAIN_YARN_PREFIXES = ['FIO 100/', 'FIO 1/70/', 'FIO 1/80/', 'FIO 150/', 'FIO 75/', 'FIO 200/', 'FIO 2/70/', 'PP ', 'PV '];
+const isMainYarn = (name: string) => MAIN_YARN_PREFIXES.some(prefix => name.toUpperCase().startsWith(prefix));
+const isElastano = (name: string) => name.toUpperCase().includes('ELASTANO');
+
+interface YarnType {
+  id: string;
+  name: string;
+}
+
+interface ProductYarnWithSelection {
+  originalYarnId: string;
+  originalYarnName: string;
+  selectedYarnId: string;
+  selectedYarnName: string;
+  proportion: number;
+  isChangeable: boolean; // true for main yarns, false for elastano
+}
+
 export const CostCalculator = () => {
   const [tinturarias, setTinturarias] = useState<Tinturaria[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -77,22 +96,27 @@ export const CostCalculator = () => {
   const [loading, setLoading] = useState(false);
   const [loadingColors, setLoadingColors] = useState(false);
   const [customerName, setCustomerName] = useState('');
+  const [allYarnTypes, setAllYarnTypes] = useState<YarnType[]>([]);
+  const [productYarns, setProductYarns] = useState<ProductYarnWithSelection[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchTinturarias();
     fetchProducts();
     fetchAllColors();
+    fetchAllYarnTypes();
   }, []);
 
   useEffect(() => {
     if (selectedTinturariaId && selectedProductId) {
       fetchProductColors(selectedTinturariaId, selectedProductId);
+      fetchProductYarns(selectedProductId);
       // Reset color entries when product or tinturaria changes
       setColorEntries([{ colorId: '', quantity: '' }]);
       setResult(null);
     } else {
       setProductColors([]);
+      setProductYarns([]);
     }
   }, [selectedTinturariaId, selectedProductId]);
 
@@ -128,6 +152,60 @@ export const CostCalculator = () => {
     if (!error && data) {
       setAllColors(data);
     }
+  };
+
+  const fetchAllYarnTypes = async () => {
+    const { data, error } = await supabase
+      .from('yarn_types')
+      .select('id, name')
+      .order('name');
+
+    if (!error && data) {
+      setAllYarnTypes(data);
+    }
+  };
+
+  const fetchProductYarns = async (productId: string) => {
+    const { data, error } = await supabase
+      .from('product_yarns')
+      .select('proportion, yarn_types(id, name)')
+      .eq('product_id', productId);
+
+    if (!error && data) {
+      const yarns: ProductYarnWithSelection[] = data.map((py: any) => {
+        const yarnName = py.yarn_types?.name || 'Fio';
+        const yarnId = py.yarn_types?.id || '';
+        return {
+          originalYarnId: yarnId,
+          originalYarnName: yarnName,
+          selectedYarnId: yarnId,
+          selectedYarnName: yarnName,
+          proportion: Number(py.proportion) || 0,
+          isChangeable: isMainYarn(yarnName) && !isElastano(yarnName)
+        };
+      });
+      setProductYarns(yarns);
+    }
+  };
+
+  const updateSelectedYarn = (index: number, newYarnId: string) => {
+    const yarnType = allYarnTypes.find(y => y.id === newYarnId);
+    if (!yarnType) return;
+    
+    setProductYarns(prev => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        selectedYarnId: newYarnId,
+        selectedYarnName: yarnType.name
+      };
+      return updated;
+    });
+  };
+
+  // Filtrar fios alternativos disponíveis (apenas fios principais, não elastano)
+  const getAlternativeYarns = () => {
+    return allYarnTypes.filter(y => isMainYarn(y.name) && !isElastano(y.name));
   };
 
   const fetchProductColors = async (tinturariaId: string, productId: string) => {
@@ -237,14 +315,6 @@ export const CostCalculator = () => {
       
       const freightCost = freightData?.price ? Number(freightData.price) : 0;
 
-      // Buscar composição de fios do produto (product_yarns)
-      const { data: productYarns, error: productYarnsError } = await supabase
-        .from('product_yarns')
-        .select('proportion, yarn_types(id, name)')
-        .eq('product_id', product.id);
-
-      if (productYarnsError) throw productYarnsError;
-
       // Mapear preços por ID de tipo de fio
       const priceMap: Record<string, number> = {};
       yarnPrices?.forEach((yp: any) => {
@@ -253,15 +323,15 @@ export const CostCalculator = () => {
         }
       });
 
-      // Calcular custo base dos fios a partir da tabela product_yarns
+      // Calcular custo base dos fios a partir dos fios SELECIONADOS (productYarns state)
       const yarnCosts: { name: string; cost: number; proportion: number }[] = [];
       let totalYarnCost = 0;
       const missingPrices: string[] = [];
 
-      (productYarns || []).forEach((py: any) => {
-        const yarnTypeId = py.yarn_types?.id;
-        const yarnName = py.yarn_types?.name || 'Fio';
-        const proportion = Number(py.proportion) || 0;
+      productYarns.forEach((py) => {
+        const yarnTypeId = py.selectedYarnId;
+        const yarnName = py.selectedYarnName;
+        const proportion = py.proportion;
         const unitPrice = yarnTypeId ? priceMap[yarnTypeId] || 0 : 0;
         const contribution = unitPrice * proportion;
 
@@ -650,6 +720,57 @@ export const CostCalculator = () => {
                 Este produto não possui cores cadastradas para a tinturaria "{selectedTinturaria?.name}". 
                 Cadastre as cores na aba "Tinturaria" antes de calcular.
               </p>
+            </div>
+          )}
+
+          {/* Yarn Selection - permite trocar fios principais */}
+          {selectedProductId && productYarns.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-card-foreground flex items-center gap-2">
+                <span className="text-sm">Composição de Fios</span>
+                <span className="text-xs text-muted-foreground">(fios recomendados pré-selecionados)</span>
+              </Label>
+              <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                {productYarns.map((yarn, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-16">
+                      {(yarn.proportion * 100).toFixed(0)}%
+                    </span>
+                    {yarn.isChangeable ? (
+                      <Select 
+                        value={yarn.selectedYarnId} 
+                        onValueChange={(value) => updateSelectedYarn(index, value)}
+                      >
+                        <SelectTrigger className="bg-background border-input flex-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getAlternativeYarns().map((y) => (
+                            <SelectItem key={y.id} value={y.id}>
+                              {y.name} {y.id === yarn.originalYarnId && '(recomendado)'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex-1 text-sm text-card-foreground bg-background/50 px-3 py-2 rounded border border-input/50">
+                        {yarn.selectedYarnName}
+                        <span className="text-xs text-muted-foreground ml-2">(fixo)</span>
+                      </div>
+                    )}
+                    {yarn.selectedYarnId !== yarn.originalYarnId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-accent hover:text-accent/80"
+                        onClick={() => updateSelectedYarn(index, yarn.originalYarnId)}
+                      >
+                        Restaurar
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
