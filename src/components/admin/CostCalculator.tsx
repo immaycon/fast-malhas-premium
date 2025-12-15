@@ -57,6 +57,7 @@ interface CalculationResult {
   colors: ColorEntry[];
   yarnCosts: { name: string; cost: number; proportion: number }[];
   weavingCost: number;
+  freightCost: number;
   totalKg: number;
   averageCostPerKg: number;
   totalValue: number;
@@ -225,6 +226,17 @@ export const CostCalculator = () => {
 
       if (yarnError) throw yarnError;
 
+      // Buscar preço do frete do dia
+      const { data: freightData, error: freightError } = await supabase
+        .from('freight_prices')
+        .select('price')
+        .eq('effective_date', today)
+        .maybeSingle();
+
+      if (freightError) throw freightError;
+      
+      const freightCost = freightData?.price ? Number(freightData.price) : 0;
+
       // Buscar composição de fios do produto (product_yarns)
       const { data: productYarns, error: productYarnsError } = await supabase
         .from('product_yarns')
@@ -244,6 +256,7 @@ export const CostCalculator = () => {
       // Calcular custo base dos fios a partir da tabela product_yarns
       const yarnCosts: { name: string; cost: number; proportion: number }[] = [];
       let totalYarnCost = 0;
+      const missingPrices: string[] = [];
 
       (productYarns || []).forEach((py: any) => {
         const yarnTypeId = py.yarn_types?.id;
@@ -252,9 +265,22 @@ export const CostCalculator = () => {
         const unitPrice = yarnTypeId ? priceMap[yarnTypeId] || 0 : 0;
         const contribution = unitPrice * proportion;
 
+        if (unitPrice === 0 && proportion > 0) {
+          missingPrices.push(yarnName);
+        }
+
         yarnCosts.push({ name: yarnName, cost: unitPrice, proportion });
         totalYarnCost += contribution;
       });
+
+      // Alertar se algum fio não tem preço cadastrado
+      if (missingPrices.length > 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Atenção: Fios sem preço',
+          description: `Os seguintes fios não têm preço cadastrado para hoje: ${missingPrices.join(', ')}`
+        });
+      }
 
       // Mapa de custos de tingimento por cor
       const dyeingMap: Record<string, number> = {};
@@ -272,8 +298,8 @@ export const CostCalculator = () => {
         const quantity = parseFloat(entry.quantity);
         const dyeingCost = dyeingMap[entry.colorId] || 0;
 
-        // Fórmula: (Σ(Custo Fio × Proporção) + Tecelagem + Tinturaria) / Fator de Aproveitamento
-        const rawCost = totalYarnCost + product.weaving_cost + dyeingCost;
+        // Fórmula: (Σ(Custo Fio × Proporção) + Tecelagem + Tinturaria + Frete) / Fator de Aproveitamento
+        const rawCost = totalYarnCost + product.weaving_cost + dyeingCost + freightCost;
         const costPerKg = rawCost / product.efficiency_factor;
         const totalCost = costPerKg * quantity;
 
@@ -298,6 +324,7 @@ export const CostCalculator = () => {
         colors: calculatedColors,
         yarnCosts,
         weavingCost: product.weaving_cost,
+        freightCost,
         totalKg,
         averageCostPerKg,
         totalValue
