@@ -948,20 +948,20 @@ export const CostCalculator = () => {
                     className="bg-background border-input"
                   />
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     onClick={() => generatePDF('orcamento')}
-                    className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold"
+                    className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold text-sm sm:text-base py-3"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Criar Orçamento (PDF)
+                    <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Criar Orçamento (PDF)</span>
                   </Button>
                   <Button 
                     onClick={() => generatePDF('pedido')}
-                    className="flex-1 bg-[#009B3A] hover:bg-[#007A2E] text-white font-poppins font-bold"
+                    className="flex-1 bg-[#009B3A] hover:bg-[#007A2E] text-white font-poppins font-bold text-sm sm:text-base py-3"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    Criar Pedido (PDF)
+                    <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Criar Pedido (PDF)</span>
                   </Button>
                 </div>
               </div>
