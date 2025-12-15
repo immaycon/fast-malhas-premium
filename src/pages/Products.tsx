@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Import fabric texture images
+// Import fabric texture images (fallbacks)
 import fabricWhite from "@/assets/fabric-texture-white.jpg";
 import fabricBlack from "@/assets/fabric-texture-black.jpg";
 import fabricNavy from "@/assets/fabric-texture-navy.jpg";
@@ -14,13 +14,49 @@ import fabricCoral from "@/assets/fabric-texture-coral.jpg";
 import fabricOlive from "@/assets/fabric-texture-olive.jpg";
 import fabricBeige from "@/assets/fabric-texture-beige.jpg";
 
+// Import real product images
+import img001RomanticLisa from "@/assets/products/001_Romantic_Lisa.jpg";
+import img003RomanticSlim from "@/assets/products/003_Romantic_Slim_Alto_Rendimento.jpg";
+import img09ACRomanticArcoIris from "@/assets/products/09AC_-_ROMANTIC_ARCO_IRIS.jpg";
+import img010RomanticMescla from "@/assets/products/010_ROMANTIC_MESCLA.jpg";
+import img101SuplexLiso from "@/assets/products/101_SUPLEX_LISO_320G.jpg";
+import img102SuplexZero from "@/assets/products/102_SUPLEX_LISO_ZERO_TRANSPARENCIA_280G.jpg";
+import img114Micropower from "@/assets/products/114_MICROPOWER_280G.jpg";
+import img301MeiaMalha from "@/assets/products/301_MEIA_MALHA_PP.jpg";
+import img304MeiaMalha from "@/assets/products/304_MEIA_MALHA_PP.jpg";
+import img306MalhaMescla from "@/assets/products/306_MALHA_PP_RAMADA_MESCLA.jpg";
+import img401Microfibra from "@/assets/products/401_MICROFIBRA_POLIAMIDA_PEDRINI.jpg";
+import img501SuplexPoliamida from "@/assets/products/501_SUPLEX_POLIAMIDA.jpg";
+
 const fabricImages = [fabricWhite, fabricBlack, fabricNavy, fabricCoral, fabricOlive, fabricBeige];
 
-// Function to get a consistent image based on product code
+// Map product codes to real images
+const productImageMap: Record<string, string> = {
+  "001": img001RomanticLisa,
+  "003": img003RomanticSlim,
+  "09AC": img09ACRomanticArcoIris,
+  "010": img010RomanticMescla,
+  "101": img101SuplexLiso,
+  "102": img102SuplexZero,
+  "114": img114Micropower,
+  "301": img301MeiaMalha,
+  "304": img304MeiaMalha,
+  "306": img306MalhaMescla,
+  "401": img401Microfibra,
+  "501": img501SuplexPoliamida,
+};
+
+// Function to get product image - prioritizes real images, falls back to textures
 const getProductImage = (code: string, name: string): string => {
+  // Check if we have a real image for this product code
+  const codeKey = code.split('-')[0]; // Get base code without suffix
+  if (productImageMap[codeKey]) {
+    return productImageMap[codeKey];
+  }
+  
   const nameLower = name.toLowerCase();
   
-  // Assign images based on product name keywords
+  // Fallback: assign texture images based on product name keywords
   if (nameLower.includes("romantic") || nameLower.includes("delicate")) return fabricBeige;
   if (nameLower.includes("microfibra") || nameLower.includes("poliamida")) return fabricNavy;
   if (nameLower.includes("suplex") || nameLower.includes("athletic")) return fabricOlive;
