@@ -141,6 +141,24 @@ export type Database = {
         }
         Relationships: []
       }
+      product_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       product_yarns: {
         Row: {
           created_at: string
@@ -186,6 +204,7 @@ export type Database = {
           composition: string | null
           created_at: string
           efficiency_factor: number
+          group_id: string | null
           id: string
           is_active: boolean
           name: string
@@ -200,6 +219,7 @@ export type Database = {
           composition?: string | null
           created_at?: string
           efficiency_factor?: number
+          group_id?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -214,6 +234,7 @@ export type Database = {
           composition?: string | null
           created_at?: string
           efficiency_factor?: number
+          group_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -223,7 +244,15 @@ export type Database = {
           width_cm?: number | null
           yield_m_kg?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
