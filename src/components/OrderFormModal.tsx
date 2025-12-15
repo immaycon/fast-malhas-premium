@@ -263,7 +263,7 @@ ${colorsList}
                   id="cityUf"
                   value={cityUf}
                   onChange={(e) => setCityUf(e.target.value)}
-                  placeholder="Ex: São Paulo/SP"
+                  placeholder="Ex: Nova Friburgo/RJ"
                   className="bg-background border-input"
                 />
               </div>
@@ -302,7 +302,7 @@ ${colorsList}
                 <SelectTrigger className="bg-background border-input">
                   <SelectValue placeholder="Selecione um artigo" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover border-border z-50 max-h-60">
+                <SelectContent className="bg-popover border-border z-[100] max-h-[40vh]" position="popper" sideOffset={4}>
                   {products.map((product) => (
                     <SelectItem key={product.id} value={product.id}>
                       {product.code} - {product.name}
@@ -341,7 +341,7 @@ ${colorsList}
                     <SelectTrigger className="bg-background border-input">
                       <SelectValue placeholder="Selecione uma cor" />
                     </SelectTrigger>
-                    <SelectContent className="bg-popover border-border z-50 max-h-60">
+                    <SelectContent className="bg-popover border-border z-[100] max-h-[40vh]" position="popper" sideOffset={4}>
                       {colors.map((color) => (
                         <SelectItem 
                           key={color.id} 
