@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, MessageCircle } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Search, MessageCircle, X, ZoomIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Import fabric texture images (fallbacks)
@@ -83,6 +84,7 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<{ src: string; name: string } | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -189,7 +191,7 @@ export default function Products() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <Card key={i} className="overflow-hidden animate-pulse">
-                  <div className="h-48 bg-muted" />
+                  <div className="h-72 bg-muted" />
                   <CardContent className="p-6">
                     <div className="h-6 bg-muted rounded mb-4" />
                     <div className="space-y-2">
@@ -211,13 +213,22 @@ export default function Products() {
                 >
                   <Card className="overflow-hidden shadow-card hover:shadow-premium transition-all duration-300 h-full group">
                     {/* Product Image */}
-                    <div className="relative h-48 overflow-hidden">
+                    <div 
+                      className="relative h-72 overflow-hidden cursor-pointer"
+                      onClick={() => setSelectedImage({ 
+                        src: getProductImage(product.code, product.name), 
+                        name: product.name 
+                      })}
+                    >
                       <img 
                         src={getProductImage(product.code, product.name)} 
                         alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 to-transparent" />
+                      <div className="absolute top-3 right-3 bg-background/80 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ZoomIn className="w-4 h-4 text-foreground" />
+                      </div>
                       <div className="absolute bottom-4 left-4 right-4">
                         <span className="inline-block bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
                           {product.code}
@@ -283,6 +294,27 @@ export default function Products() {
           </motion.div>
         </div>
       </div>
+
+      {/* Image Modal */}
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl w-full p-0 bg-transparent border-none">
+          <div className="relative">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 bg-background/80 backdrop-blur-sm p-2 rounded-full hover:bg-background transition-colors z-10"
+            >
+              <X className="w-6 h-6 text-foreground" />
+            </button>
+            {selectedImage && (
+              <img
+                src={selectedImage.src}
+                alt={selectedImage.name}
+                className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
