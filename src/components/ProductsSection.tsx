@@ -64,6 +64,21 @@ export const ProductsSection = () => {
             <ProductCard key={index} {...product} index={index} />
           ))}
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-center mt-12"
+        >
+          <a
+            href="/produtos"
+            className="inline-flex items-center justify-center px-8 py-4 bg-primary hover:bg-primary/90 text-primary-foreground font-poppins font-bold text-lg rounded-lg transition-all duration-300 hover:scale-105"
+          >
+            Ver todos os produtos
+          </a>
+        </motion.div>
       </div>
     </section>
   );
