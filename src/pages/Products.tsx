@@ -19,7 +19,8 @@ import fabricBeige from "@/assets/fabric-texture-beige.jpg";
 import img001RomanticLisa from "@/assets/products/001_Romantic_Lisa.jpg";
 import img003RomanticSlim from "@/assets/products/003_Romantic_Slim_Alto_Rendimento.jpg";
 import img009RomanticEstampado from "@/assets/products/009_ROMANTIC_ESTAMPADO.jpeg";
-import img09ACRomanticArcoIris from "@/assets/products/09AC_-_ROMANTIC_ARCO_IRIS.jpg";
+import img09ACRomanticArcoIrisOld from "@/assets/products/09AC_-_ROMANTIC_ARCO_IRIS.jpg";
+import img09ACRomanticArcoIris from "@/assets/products/09AC_ROMANTIC_ARCO_IRIS_NEW.jpg";
 import img010RomanticMescla from "@/assets/products/010_ROMANTIC_MESCLA.jpg";
 import img075MicroPremium from "@/assets/products/075_Micro_Premium.jpeg";
 import img101SuplexLiso from "@/assets/products/101_SUPLEX_LISO_320G.jpg";
@@ -56,9 +57,9 @@ const getProductImageFromMap = (code: string, name: string): string | null => {
     return img001RomanticLisa;
   }
   
-  // 009 variants - only non-LINGERIE gets the image
+  // 009 variants - LINGERIE gets the old 09AC image
   if (fullCode.includes("009")) {
-    if (nameLower.includes("lingerie")) return null; // ROMANTIC ESTAMPADO LINGERIE AR uses fallback texture
+    if (nameLower.includes("lingerie")) return img09ACRomanticArcoIrisOld; // ROMANTIC ESTAMPADO LINGERIE uses old 09AC image
     return img009RomanticEstampado;
   }
   
