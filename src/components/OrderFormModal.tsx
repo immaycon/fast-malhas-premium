@@ -151,23 +151,23 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
     const colorsList = selectedColors.map(sc => `  - ${sc.colorName}: ${sc.quantity}kg`).join("\n");
     const totalKg = selectedColors.reduce((acc, sc) => acc + sc.quantity, 0);
 
-    const message = `🧵 *NOVO PEDIDO - FAST MALHAS*
+    const message = `*NOVO PEDIDO - FAST MALHAS*
 
 *Dados do Cliente:*
-👤 Nome: ${fullName}
-📱 WhatsApp: ${whatsapp}
-🏢 Empresa: ${companyName}
-📍 Cidade/UF: ${cityUf}
-🏷️ Tipo: ${customerType === "atacadista" ? "Atacadista de Malha" : "Confecção"}
+Nome: ${fullName}
+WhatsApp: ${whatsapp}
+Empresa: ${companyName}
+Cidade/UF: ${cityUf}
+Tipo: ${customerType === "atacadista" ? "Atacadista de Malha" : "Confeccao"}
 
 *Pedido:*
-📦 Artigo: ${selectedProduct.code} - ${selectedProduct.name}
-${selectedProduct.composition ? `📋 Composição: ${selectedProduct.composition}` : ""}
+Artigo: ${selectedProduct.code} - ${selectedProduct.name}
+${selectedProduct.composition ? `Composicao: ${selectedProduct.composition}` : ""}
 
 *Cores e Quantidades:*
 ${colorsList}
 
-📊 *Total: ${totalKg}kg*`;
+*Total: ${totalKg}kg*`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/5522998833821?text=${encodedMessage}`, "_blank");
