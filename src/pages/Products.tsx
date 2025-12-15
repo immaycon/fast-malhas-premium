@@ -52,15 +52,30 @@ const getProductImageFromMap = (code: string, name: string): string | null => {
   // Specific 001 variants
   if (fullCode.includes("001")) {
     if (nameLower.includes("light")) return null; // 001 LIGHT uses fallback texture
+    if (nameLower.includes("alto rendimento")) return null; // ROMANTIC LISA ALTO RENDIMENTO uses fallback texture
     return img001RomanticLisa;
+  }
+  
+  // 009 variants - only non-LINGERIE gets the image
+  if (fullCode.includes("009")) {
+    if (nameLower.includes("lingerie")) return null; // ROMANTIC ESTAMPADO LINGERIE AR uses fallback texture
+    return img009RomanticEstampado;
+  }
+  
+  // 010 ROMANTIC MESCLA uses fallback texture (image moved to 111)
+  if (fullCode.includes("010")) {
+    return null;
+  }
+  
+  // 111 SUPLEX MESCLA gets the former 010 image
+  if (fullCode.includes("111")) {
+    return img010RomanticMescla;
   }
   
   // Standard code-based mappings
   const productImageMap: Record<string, string> = {
     "003": img003RomanticSlim,
-    "009": img009RomanticEstampado,
     "09AC": img09ACRomanticArcoIris,
-    "010": img010RomanticMescla,
     "075": img075MicroPremium,
     "101": img101SuplexLiso,
     "102": img102SuplexZero,
