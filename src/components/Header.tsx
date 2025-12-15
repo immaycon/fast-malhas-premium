@@ -10,6 +10,7 @@ export const Header = () => {
 
   const navLinks = [
     { path: "/", label: "Início" },
+    { path: "/produtos", label: "Produtos" },
     { path: "/cores", label: "Cores" },
     { path: "/admin", label: "Área Admin", icon: Lock },
   ];
