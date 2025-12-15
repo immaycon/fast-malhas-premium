@@ -22,7 +22,7 @@ export const ContactSection = () => {
           className="text-center max-w-4xl mx-auto"
         >
           <h2 className="font-poppins text-4xl md:text-5xl font-black text-primary-foreground mb-6">
-            Fale com a Gerência e Inicie Sua Produção
+            Fale com Nossa Equipe e Inicie Sua Produção
           </h2>
           
           <p className="text-xl text-primary-foreground/90 mb-12 leading-relaxed">
@@ -39,7 +39,7 @@ export const ContactSection = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <Phone className="w-6 h-6 text-accent" />
               <h3 className="font-poppins text-2xl font-bold text-primary-foreground">
-                Gerente de Contas
+                Equipe Comercial
               </h3>
             </div>
 

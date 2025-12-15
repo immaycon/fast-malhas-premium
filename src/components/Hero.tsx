@@ -2,12 +2,9 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
 import heroTexture from "@/assets/hero-texture.jpg";
+import { OrderFormModal } from "./OrderFormModal";
 
 export const Hero = () => {
-  const handleWhatsAppClick = () => {
-    window.open("https://wa.me/5522998833821", "_blank");
-  };
-
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div 
@@ -43,16 +40,17 @@ export const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Button 
-              size="lg"
-              onClick={handleWhatsAppClick}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold text-base md:text-lg px-6 md:px-8 py-5 md:py-6 h-auto shadow-premium transition-all duration-300 hover:scale-105 max-w-full"
-            >
-              <MessageCircle className="mr-2 h-5 w-5 md:h-6 md:w-6 flex-shrink-0" />
-              <span className="text-center leading-tight">
-                FALE COM O GERENTE<br className="sm:hidden" /> E FAÇA SEU PEDIDO
-              </span>
-            </Button>
+            <OrderFormModal>
+              <Button 
+                size="lg"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold text-base md:text-lg px-6 md:px-8 py-5 md:py-6 h-auto shadow-premium transition-all duration-300 hover:scale-105 max-w-full"
+              >
+                <MessageCircle className="mr-2 h-5 w-5 md:h-6 md:w-6 flex-shrink-0" />
+                <span className="text-center leading-tight">
+                  FAÇA SEU PEDIDO
+                </span>
+              </Button>
+            </OrderFormModal>
           </motion.div>
         </motion.div>
       </div>
