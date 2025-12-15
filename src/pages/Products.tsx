@@ -6,6 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Search, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+// Import fabric texture images
+import fabricWhite from "@/assets/fabric-texture-white.jpg";
+import fabricBlack from "@/assets/fabric-texture-black.jpg";
+import fabricNavy from "@/assets/fabric-texture-navy.jpg";
+import fabricCoral from "@/assets/fabric-texture-coral.jpg";
+import fabricOlive from "@/assets/fabric-texture-olive.jpg";
+import fabricBeige from "@/assets/fabric-texture-beige.jpg";
+
+const fabricImages = [fabricWhite, fabricBlack, fabricNavy, fabricCoral, fabricOlive, fabricBeige];
+
+// Function to get a consistent image based on product code
+const getProductImage = (code: string, name: string): string => {
+  const nameLower = name.toLowerCase();
+  
+  // Assign images based on product name keywords
+  if (nameLower.includes("romantic") || nameLower.includes("delicate")) return fabricBeige;
+  if (nameLower.includes("microfibra") || nameLower.includes("poliamida")) return fabricNavy;
+  if (nameLower.includes("suplex") || nameLower.includes("athletic")) return fabricOlive;
+  if (nameLower.includes("preto") || nameLower.includes("black")) return fabricBlack;
+  if (nameLower.includes("branco") || nameLower.includes("white")) return fabricWhite;
+  if (nameLower.includes("coral") || nameLower.includes("rosa") || nameLower.includes("pink")) return fabricCoral;
+  
+  // Use code hash to get consistent image for other products
+  const hash = code.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return fabricImages[hash % fabricImages.length];
+};
+
 interface Product {
   id: string;
   code: string;
@@ -147,14 +174,14 @@ export default function Products() {
                   transition={{ duration: 0.4, delay: index * 0.05 }}
                 >
                   <Card className="overflow-hidden shadow-card hover:shadow-premium transition-all duration-300 h-full group">
-                    {/* Product Image Placeholder */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-military/20 to-accent/20">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="font-poppins text-6xl font-black text-foreground/10">
-                          {product.code}
-                        </span>
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 to-transparent" />
+                    {/* Product Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={getProductImage(product.code, product.name)} 
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-charcoal/70 to-transparent" />
                       <div className="absolute bottom-4 left-4 right-4">
                         <span className="inline-block bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-bold">
                           {product.code}
