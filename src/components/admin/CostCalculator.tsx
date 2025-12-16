@@ -100,6 +100,8 @@ export const CostCalculator = () => {
   const [allYarnTypes, setAllYarnTypes] = useState<YarnType[]>([]);
   const [productYarns, setProductYarns] = useState<ProductYarnWithSelection[]>([]);
   const [specialDiscount, setSpecialDiscount] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<'a_vista' | 'a_prazo' | 'adm'>('a_vista');
+  const [admDescription, setAdmDescription] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -613,6 +615,21 @@ export const CostCalculator = () => {
 
     yPos += 10;
 
+    // Payment Method Box (destaque)
+    const paymentLabel = paymentMethod === 'a_vista' 
+      ? 'Pedido: à vista' 
+      : paymentMethod === 'a_prazo' 
+        ? 'Pedido: à prazo' 
+        : `Pedido: ADM - ${admDescription}`;
+    
+    doc.setFillColor(70, 70, 70);
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 12, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`FORMA DE PAGAMENTO: ${paymentLabel}`, margin + 5, yPos + 8);
+    yPos += 18;
+
     // Totals Box
     doc.setFillColor(...primaryColor);
     doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'F');
@@ -967,7 +984,7 @@ export const CostCalculator = () => {
                 </div>
               </div>
 
-              {/* Customer Name & PDF Generation */}
+              {/* Customer Name & Payment Method & PDF Generation */}
               <div className="border-t border-military/30 pt-4 space-y-4">
                 <div className="space-y-2">
                   <Label className="text-card-foreground">Nome do Cliente</Label>
@@ -979,6 +996,39 @@ export const CostCalculator = () => {
                     className="bg-background border-input"
                   />
                 </div>
+
+                {/* Payment Method Selection */}
+                <div className="space-y-2">
+                  <Label className="text-card-foreground">Forma de Pagamento</Label>
+                  <Select value={paymentMethod} onValueChange={(value: 'a_vista' | 'a_prazo' | 'adm') => {
+                    setPaymentMethod(value);
+                    if (value !== 'adm') setAdmDescription('');
+                  }}>
+                    <SelectTrigger className="bg-background border-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="a_vista">Pedido: à vista</SelectItem>
+                      <SelectItem value="a_prazo">Pedido: à prazo</SelectItem>
+                      <SelectItem value="adm">Pedido: ADM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* ADM Description Field */}
+                {paymentMethod === 'adm' && (
+                  <div className="space-y-2">
+                    <Label className="text-card-foreground">Descrição ADM</Label>
+                    <Input
+                      type="text"
+                      placeholder="Digite a descrição do ADM"
+                      value={admDescription}
+                      onChange={(e) => setAdmDescription(e.target.value)}
+                      className="bg-background border-input"
+                    />
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     onClick={() => generatePDF('orcamento')}
