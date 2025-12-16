@@ -699,6 +699,16 @@ export const CostCalculator = () => {
       return;
     }
 
+    // Require quote to be saved first to get the order number
+    if (!lastSavedQuoteNumber) {
+      toast({
+        variant: 'destructive',
+        title: 'Salve a cotação primeiro',
+        description: 'É necessário salvar a cotação no sistema antes de gerar o PDF.'
+      });
+      return;
+    }
+
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -715,17 +725,8 @@ export const CostCalculator = () => {
     const filePrefix = type === 'pedido' ? 'Pedido' : 'Orcamento';
     const summaryTitle = type === 'pedido' ? 'RESUMO DO PEDIDO' : 'RESUMO DO ORÇAMENTO';
 
-    // Use saved quote number if available, otherwise generate from localStorage
-    let docNumber: string;
-    if (lastSavedQuoteNumber) {
-      docNumber = lastSavedQuoteNumber.toString().padStart(4, '0');
-    } else {
-      const storageKey = type === 'pedido' ? 'fastmalhas_order_num' : 'fastmalhas_quote_num';
-      const lastNum = parseInt(localStorage.getItem(storageKey) || '0', 10);
-      const newNum = lastNum + 1;
-      localStorage.setItem(storageKey, newNum.toString());
-      docNumber = newNum.toString().padStart(4, '0');
-    }
+    // Use ONLY the database order number
+    const docNumber = lastSavedQuoteNumber.toString().padStart(4, '0');
 
     // Header
     doc.setFillColor(...primaryColor);
