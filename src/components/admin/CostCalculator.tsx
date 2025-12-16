@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Calculator, Plus, Trash2, FileText, AlertCircle, Download, Factory } from 'lucide-react';
+import { Calculator, Plus, Trash2, FileText, AlertCircle, Download, Factory, Search, Save, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 // Format number to Brazilian currency format (10.000,00)
@@ -83,6 +83,41 @@ interface ProductYarnWithSelection {
   isChangeable: boolean; // true for main yarns, false for elastano
 }
 
+// Interface for saved quote data
+interface SavedQuoteData {
+  tinturaria_id: string;
+  tinturaria_name: string;
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  composition: string;
+  weight_gsm: number;
+  width_cm: number;
+  yield_m_kg: number;
+  efficiency_factor: number;
+  weaving_cost: number;
+  customer_name: string;
+  payment_method: 'a_vista' | 'a_prazo' | 'adm';
+  adm_description: string;
+  conversion_factor: number;
+  special_discount: number;
+  freight_price: number;
+  colors: Array<{
+    color_id: string;
+    color_name: string;
+    quantity: number;
+    dyeing_cost: number;
+    cost_per_kg: number;
+    total_cost: number;
+  }>;
+  yarn_prices: Array<{
+    yarn_type_id: string;
+    yarn_name: string;
+    price: number;
+    proportion: number;
+  }>;
+}
+
 export const CostCalculator = () => {
   const [tinturarias, setTinturarias] = useState<Tinturaria[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -102,6 +137,14 @@ export const CostCalculator = () => {
   const [specialDiscount, setSpecialDiscount] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'a_vista' | 'a_prazo' | 'adm'>('a_vista');
   const [admDescription, setAdmDescription] = useState('');
+  
+  // Quote loading/saving state
+  const [quoteSearchNumber, setQuoteSearchNumber] = useState('');
+  const [loadingQuote, setLoadingQuote] = useState(false);
+  const [savingQuote, setSavingQuote] = useState(false);
+  const [lastSavedQuoteNumber, setLastSavedQuoteNumber] = useState<number | null>(null);
+  const [loadedQuoteData, setLoadedQuoteData] = useState<SavedQuoteData | null>(null);
+  
   const { toast } = useToast();
 
   useEffect(() => {
@@ -424,6 +467,208 @@ export const CostCalculator = () => {
     }
   };
 
+  // Save quote to database
+  const saveQuoteToDatabase = async () => {
+    if (!result) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Calcule o custo antes de salvar a cotação.'
+      });
+      return;
+    }
+
+    setSavingQuote(true);
+    try {
+      const storedConversionFactor = localStorage.getItem('globalConversionFactor');
+      const conversionFactorValue = storedConversionFactor ? parseFloat(storedConversionFactor) : 0;
+      const specialDiscountValue = parseFloat(specialDiscount) || 0;
+
+      const quoteData: SavedQuoteData = {
+        tinturaria_id: selectedTinturariaId,
+        tinturaria_name: result.tinturaria.name,
+        product_id: selectedProductId,
+        product_code: result.product.code,
+        product_name: result.product.name,
+        composition: result.product.composition || '',
+        weight_gsm: result.product.weight_gsm,
+        width_cm: result.product.width_cm,
+        yield_m_kg: result.product.yield_m_kg,
+        efficiency_factor: result.product.efficiency_factor,
+        weaving_cost: result.weavingCost,
+        customer_name: customerName,
+        payment_method: paymentMethod,
+        adm_description: admDescription,
+        conversion_factor: conversionFactorValue,
+        special_discount: specialDiscountValue,
+        freight_price: result.freightCost,
+        colors: result.colors.map(c => ({
+          color_id: c.colorId,
+          color_name: c.colorName,
+          quantity: c.quantity,
+          dyeing_cost: c.dyeingCost,
+          cost_per_kg: c.costPerKg,
+          total_cost: c.totalCost
+        })),
+        yarn_prices: result.yarnCosts.map(y => ({
+          yarn_type_id: productYarns.find(py => py.selectedYarnName === y.name)?.selectedYarnId || '',
+          yarn_name: y.name,
+          price: y.cost,
+          proportion: y.proportion
+        }))
+      };
+
+      // Insert and get the new row with order_number
+      const { error: insertError } = await supabase
+        .from('quotes')
+        .insert([{
+          product_id: selectedProductId,
+          total_kg: result.totalKg,
+          average_cost_per_kg: result.averageCostPerKg,
+          total_value: result.totalValue,
+          quote_data: JSON.parse(JSON.stringify(quoteData))
+        }]);
+
+      // Query for the most recent quote to get the order_number
+      const { data: recentQuote, error: queryError } = await supabase
+        .from('quotes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (queryError) throw queryError;
+
+      const orderNumber = (recentQuote as unknown as { order_number: number }).order_number;
+      setLastSavedQuoteNumber(orderNumber);
+      toast({
+        title: 'Cotação salva!',
+        description: `Número da cotação: ${orderNumber}`
+      });
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível salvar a cotação.'
+      });
+    } finally {
+      setSavingQuote(false);
+    }
+  };
+
+  // Load quote from database by order number
+  const loadQuoteByNumber = async () => {
+    const orderNum = parseInt(quoteSearchNumber);
+    if (!orderNum || orderNum <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Digite um número de cotação válido.'
+      });
+      return;
+    }
+
+    setLoadingQuote(true);
+    try {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('order_number', orderNum)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        toast({
+          variant: 'destructive',
+          title: 'Não encontrado',
+          description: `Cotação nº ${orderNum} não existe.`
+        });
+        return;
+      }
+
+      const quoteData = data.quote_data as unknown as SavedQuoteData;
+      
+      // Store loaded quote data for display
+      setLoadedQuoteData(quoteData);
+      
+      // Restore form state
+      setSelectedTinturariaId(quoteData.tinturaria_id);
+      setSelectedProductId(quoteData.product_id);
+      setCustomerName(quoteData.customer_name || '');
+      setPaymentMethod(quoteData.payment_method || 'a_vista');
+      setAdmDescription(quoteData.adm_description || '');
+      setSpecialDiscount(quoteData.special_discount?.toString() || '');
+      
+      // Restore color entries
+      setColorEntries(quoteData.colors.map(c => ({
+        colorId: c.color_id,
+        quantity: c.quantity.toString()
+      })));
+      
+      // Build result from saved data (preserving original prices)
+      const savedProduct: Product = {
+        id: quoteData.product_id,
+        code: quoteData.product_code,
+        name: quoteData.product_name,
+        composition: quoteData.composition,
+        weight_gsm: quoteData.weight_gsm,
+        width_cm: quoteData.width_cm,
+        yield_m_kg: quoteData.yield_m_kg,
+        efficiency_factor: quoteData.efficiency_factor,
+        weaving_cost: quoteData.weaving_cost
+      };
+
+      const savedTinturaria: Tinturaria = {
+        id: quoteData.tinturaria_id,
+        name: quoteData.tinturaria_name,
+        conversion_factor: quoteData.conversion_factor
+      };
+
+      const savedColors: ColorEntry[] = quoteData.colors.map(c => ({
+        colorId: c.color_id,
+        colorName: c.color_name,
+        quantity: c.quantity,
+        dyeingCost: c.dyeing_cost,
+        costPerKg: c.cost_per_kg,
+        totalCost: c.total_cost
+      }));
+
+      const savedYarnCosts = quoteData.yarn_prices.map(y => ({
+        name: y.yarn_name,
+        cost: y.price,
+        proportion: y.proportion
+      }));
+
+      setResult({
+        product: savedProduct,
+        tinturaria: savedTinturaria,
+        colors: savedColors,
+        yarnCosts: savedYarnCosts,
+        weavingCost: quoteData.weaving_cost,
+        freightCost: quoteData.freight_price,
+        totalKg: data.total_kg,
+        averageCostPerKg: data.average_cost_per_kg,
+        totalValue: data.total_value
+      });
+
+      toast({
+        title: 'Cotação carregada!',
+        description: `Cotação nº ${orderNum} de ${new Date(data.created_at).toLocaleDateString('pt-BR')}`
+      });
+    } catch (error) {
+      console.error('Error loading quote:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível carregar a cotação.'
+      });
+    } finally {
+      setLoadingQuote(false);
+    }
+  };
+
   // Get available colors - ONLY from productColors (tinturaria + product specific)
   const availableColors = productColors;
 
@@ -678,10 +923,59 @@ export const CostCalculator = () => {
   const selectedTinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Input Form */}
-      <Card className="bg-card/95 border-military/30">
-        <CardHeader>
+    <div className="space-y-6">
+      {/* Quote Search/Load Section */}
+      <Card className="bg-card/95 border-accent/30">
+        <CardContent className="pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex-1 space-y-2">
+              <Label className="text-card-foreground flex items-center gap-2">
+                <Search className="w-4 h-4 text-accent" />
+                Buscar Cotação por Número
+              </Label>
+              <Input
+                type="number"
+                placeholder="Ex: 1, 2, 3..."
+                value={quoteSearchNumber}
+                onChange={(e) => setQuoteSearchNumber(e.target.value)}
+                className="bg-background border-input"
+              />
+            </div>
+            <Button
+              onClick={loadQuoteByNumber}
+              disabled={loadingQuote || !quoteSearchNumber}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+            >
+              {loadingQuote ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Carregando...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Carregar Cotação
+                </>
+              )}
+            </Button>
+          </div>
+          {lastSavedQuoteNumber && (
+            <p className="text-sm text-accent mt-2">
+              Última cotação salva: <strong>Nº {lastSavedQuoteNumber}</strong>
+            </p>
+          )}
+          {loadedQuoteData && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Cotação carregada preserva os preços originais da data de criação.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input Form */}
+        <Card className="bg-card/95 border-military/30">
+          <CardHeader>
           <CardTitle className="font-poppins text-xl text-card-foreground flex items-center gap-2">
             <Calculator className="w-5 h-5 text-accent" />
             Calculadora de Custos
@@ -1029,6 +1323,26 @@ export const CostCalculator = () => {
                   </div>
                 )}
 
+                {/* Save Quote Button */}
+                <Button
+                  onClick={saveQuoteToDatabase}
+                  disabled={savingQuote}
+                  variant="outline"
+                  className="w-full border-accent text-accent hover:bg-accent/10 font-poppins font-bold"
+                >
+                  {savingQuote ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Cotação no Sistema
+                    </>
+                  )}
+                </Button>
+
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     onClick={() => generatePDF('orcamento')}
@@ -1055,6 +1369,7 @@ export const CostCalculator = () => {
           )}
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 };
