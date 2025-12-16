@@ -670,6 +670,9 @@ export const CostCalculator = () => {
         totalValue: data.total_value
       });
 
+      // Set the order number so PDFs can be generated without re-saving
+      setLastSavedQuoteNumber(orderNum);
+
       toast({
         title: 'Cotação carregada!',
         description: `Cotação nº ${orderNum} de ${new Date(data.created_at).toLocaleDateString('pt-BR')}`
