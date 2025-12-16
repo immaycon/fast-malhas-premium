@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Palette, Plus, Trash2, Save, Search, Edit2, X, Factory, Layers, Package } from 'lucide-react';
+import { Palette, Plus, Trash2, Save, Search, Edit2, X, Factory, Layers, Package, Calculator } from 'lucide-react';
 import { DyeingCostsImport } from './DyeingCostsImport';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -68,8 +68,23 @@ export const DyeingCostsTab = () => {
   // For adding new costs
   const [newColorName, setNewColorName] = useState('');
   const [newCost, setNewCost] = useState('');
+
+  // Global conversion factor (stored in localStorage)
+  const [globalConversionFactor, setGlobalConversionFactor] = useState<string>(() => {
+    return localStorage.getItem('globalConversionFactor') || '';
+  });
   
   const { toast } = useToast();
+
+  // Save conversion factor to localStorage whenever it changes
+  const handleConversionFactorChange = (value: string) => {
+    setGlobalConversionFactor(value);
+    if (value) {
+      localStorage.setItem('globalConversionFactor', value);
+    } else {
+      localStorage.removeItem('globalConversionFactor');
+    }
+  };
 
   useEffect(() => {
     fetchTinturarias();
@@ -471,6 +486,42 @@ export const DyeingCostsTab = () => {
 
   return (
     <div className="space-y-6">
+      {/* Global Conversion Factor - BEFORE Tinturaria Selection */}
+      <Card className="bg-card/95 border-accent/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-poppins text-lg text-card-foreground flex items-center gap-2">
+            <Calculator className="w-5 h-5 text-accent" />
+            Fator de Conversão Global
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex-1 max-w-xs">
+              <Label className="text-sm text-muted-foreground mb-1 block">
+                Valor descontado ao custo de cada cor (R$)
+              </Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={globalConversionFactor}
+                onChange={(e) => handleConversionFactorChange(e.target.value)}
+                className="bg-background border-input"
+              />
+            </div>
+            {globalConversionFactor && parseFloat(globalConversionFactor) > 0 && (
+              <Badge variant="secondary" className="mt-5">
+                Ativo: R$ {parseFloat(globalConversionFactor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </Badge>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Este valor será aplicado a todas as cores de todos os artigos na calculadora de custos.
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Tinturaria Selection */}
       <Card className="bg-card/95 border-military/30">
         <CardHeader>

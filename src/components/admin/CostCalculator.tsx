@@ -100,7 +100,6 @@ export const CostCalculator = () => {
   const [allYarnTypes, setAllYarnTypes] = useState<YarnType[]>([]);
   const [productYarns, setProductYarns] = useState<ProductYarnWithSelection[]>([]);
   const [specialDiscount, setSpecialDiscount] = useState<string>('');
-  const [conversionFactor, setConversionFactor] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,10 +113,9 @@ export const CostCalculator = () => {
     if (selectedTinturariaId && selectedProductId) {
       fetchProductColors(selectedTinturariaId, selectedProductId);
       fetchProductYarns(selectedProductId);
-      // Reset color entries, special discount, and conversion factor when product or tinturaria changes
+      // Reset color entries and special discount when product or tinturaria changes
       setColorEntries([{ colorId: '', quantity: '' }]);
       setSpecialDiscount('');
-      setConversionFactor('');
       setResult(null);
     } else {
       setProductColors([]);
@@ -368,8 +366,9 @@ export const CostCalculator = () => {
       let totalKg = 0;
       let totalValue = 0;
 
-      // Get conversion factor and special discount from user inputs
-      const conversionFactorValue = parseFloat(conversionFactor) || 0;
+      // Get conversion factor from localStorage and special discount from user input
+      const storedConversionFactor = localStorage.getItem('globalConversionFactor');
+      const conversionFactorValue = storedConversionFactor ? parseFloat(storedConversionFactor) : 0;
       const specialDiscountValue = parseFloat(specialDiscount) || 0;
 
       for (const entry of validEntries) {
@@ -785,41 +784,24 @@ export const CostCalculator = () => {
             </div>
           )}
 
-          {/* Fator de Conversão e Desconto Especial */}
+          {/* Desconto Especial */}
           {selectedProductId && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-card-foreground">
-                  Fator de Conversão (R$)
-                  <span className="text-xs text-muted-foreground ml-2">
-                    Valor descontado ao custo de cada cor
-                  </span>
-                </Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={conversionFactor}
-                  onChange={(e) => setConversionFactor(e.target.value)}
-                  className="bg-background border-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-card-foreground">
-                  Desconto Especial (R$)
-                  <span className="text-xs text-muted-foreground ml-2">
-                    Valor descontado ao custo de cada cor
-                  </span>
-                </Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  value={specialDiscount}
-                  onChange={(e) => setSpecialDiscount(e.target.value)}
-                  className="bg-background border-input"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label className="text-card-foreground">
+                Desconto Especial (R$)
+                <span className="text-xs text-muted-foreground ml-2">
+                  Valor descontado ao custo de cada cor
+                </span>
+              </Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={specialDiscount}
+                onChange={(e) => setSpecialDiscount(e.target.value)}
+                className="bg-background border-input"
+              />
             </div>
           )}
 
