@@ -548,7 +548,7 @@ export const DyeingCostsTab = () => {
                 <div className="flex-1">
                   <Label className="text-card-foreground">Fator de Conversão (R$)</Label>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Valor adicionado ao custo de cada cor nos cálculos
+                    Valor descontado ao custo de cada cor
                   </p>
                   <Input
                     type="number"

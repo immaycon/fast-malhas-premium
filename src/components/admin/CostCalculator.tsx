@@ -789,7 +789,7 @@ export const CostCalculator = () => {
               <Label className="text-card-foreground">
                 Desconto Especial (R$)
                 <span className="text-xs text-muted-foreground ml-2">
-                  Valor adicionado ao custo de cada cor
+                  Valor descontado ao custo de cada cor
                 </span>
               </Label>
               <Input
