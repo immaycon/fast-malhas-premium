@@ -518,16 +518,22 @@ export const CostCalculator = () => {
         }))
       };
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Insert and get the new row with order_number
       const { error: insertError } = await supabase
         .from('quotes')
         .insert([{
           product_id: selectedProductId,
+          user_id: user?.id,
           total_kg: result.totalKg,
           average_cost_per_kg: result.averageCostPerKg,
           total_value: result.totalValue,
           quote_data: JSON.parse(JSON.stringify(quoteData))
         }]);
+
+      if (insertError) throw insertError;
 
       // Query for the most recent quote to get the order_number
       const { data: recentQuote, error: queryError } = await supabase
@@ -698,12 +704,17 @@ export const CostCalculator = () => {
     const filePrefix = type === 'pedido' ? 'Pedido' : 'Orcamento';
     const summaryTitle = type === 'pedido' ? 'RESUMO DO PEDIDO' : 'RESUMO DO ORÇAMENTO';
 
-    // Generate order number
-    const storageKey = type === 'pedido' ? 'fastmalhas_order_num' : 'fastmalhas_quote_num';
-    const lastNum = parseInt(localStorage.getItem(storageKey) || '0', 10);
-    const newNum = lastNum + 1;
-    localStorage.setItem(storageKey, newNum.toString());
-    const docNumber = newNum.toString().padStart(4, '0');
+    // Use saved quote number if available, otherwise generate from localStorage
+    let docNumber: string;
+    if (lastSavedQuoteNumber) {
+      docNumber = lastSavedQuoteNumber.toString().padStart(4, '0');
+    } else {
+      const storageKey = type === 'pedido' ? 'fastmalhas_order_num' : 'fastmalhas_quote_num';
+      const lastNum = parseInt(localStorage.getItem(storageKey) || '0', 10);
+      const newNum = lastNum + 1;
+      localStorage.setItem(storageKey, newNum.toString());
+      docNumber = newNum.toString().padStart(4, '0');
+    }
 
     // Header
     doc.setFillColor(...primaryColor);
