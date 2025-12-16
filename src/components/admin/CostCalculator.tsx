@@ -17,6 +17,7 @@ const formatBRL = (value: number): string => {
 interface Tinturaria {
   id: string;
   name: string;
+  conversion_factor: number;
 }
 
 interface Product {
@@ -98,6 +99,7 @@ export const CostCalculator = () => {
   const [customerName, setCustomerName] = useState('');
   const [allYarnTypes, setAllYarnTypes] = useState<YarnType[]>([]);
   const [productYarns, setProductYarns] = useState<ProductYarnWithSelection[]>([]);
+  const [specialDiscount, setSpecialDiscount] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -111,8 +113,9 @@ export const CostCalculator = () => {
     if (selectedTinturariaId && selectedProductId) {
       fetchProductColors(selectedTinturariaId, selectedProductId);
       fetchProductYarns(selectedProductId);
-      // Reset color entries when product or tinturaria changes
+      // Reset color entries and special discount when product or tinturaria changes
       setColorEntries([{ colorId: '', quantity: '' }]);
+      setSpecialDiscount('');
       setResult(null);
     } else {
       setProductColors([]);
@@ -123,7 +126,7 @@ export const CostCalculator = () => {
   const fetchTinturarias = async () => {
     const { data, error } = await supabase
       .from('tinturarias')
-      .select('id, name')
+      .select('id, name, conversion_factor')
       .order('name');
 
     if (!error && data) {
@@ -363,13 +366,19 @@ export const CostCalculator = () => {
       let totalKg = 0;
       let totalValue = 0;
 
+      // Get conversion factor from selected tinturaria and special discount
+      const conversionFactor = tinturaria.conversion_factor || 0;
+      const specialDiscountValue = parseFloat(specialDiscount) || 0;
+
       for (const entry of validEntries) {
         const productColor = productColors.find(pc => pc.color_id === entry.colorId);
         const quantity = parseFloat(entry.quantity);
         const dyeingCost = dyeingMap[entry.colorId] || 0;
 
-        // Fórmula: (Σ(Custo Fio × Proporção) + Tecelagem + Tinturaria + Frete) / Fator de Aproveitamento
-        const rawCost = totalYarnCost + product.weaving_cost + dyeingCost + freightCost;
+        // Fórmula: (Σ(Custo Fio × Proporção) + Tecelagem + Tinturaria + Fator Conversão + Desconto Especial + Frete) / Fator de Aproveitamento
+        // Custo cor = dyeingCost + conversionFactor + specialDiscountValue
+        const colorTotalCost = dyeingCost + conversionFactor + specialDiscountValue;
+        const rawCost = totalYarnCost + product.weaving_cost + colorTotalCost + freightCost;
         const costPerKg = rawCost / product.efficiency_factor;
         const totalCost = costPerKg * quantity;
 
@@ -377,7 +386,7 @@ export const CostCalculator = () => {
           colorId: entry.colorId,
           colorName: productColor?.color_name || 'Desconhecida',
           quantity,
-          dyeingCost,
+          dyeingCost: colorTotalCost, // Now includes conversion + special discount
           costPerKg,
           totalCost
         });
@@ -771,6 +780,32 @@ export const CostCalculator = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Desconto Especial */}
+          {selectedProductId && (
+            <div className="space-y-2">
+              <Label className="text-card-foreground">
+                Desconto Especial (R$)
+                <span className="text-xs text-muted-foreground ml-2">
+                  Valor adicionado ao custo de cada cor
+                </span>
+              </Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0,00"
+                value={specialDiscount}
+                onChange={(e) => setSpecialDiscount(e.target.value)}
+                className="bg-background border-input"
+              />
+              {selectedTinturaria?.conversion_factor ? (
+                <p className="text-xs text-muted-foreground">
+                  Fator de conversão da tinturaria: R$ {formatBRL(selectedTinturaria.conversion_factor)}
+                </p>
+              ) : null}
             </div>
           )}
 
