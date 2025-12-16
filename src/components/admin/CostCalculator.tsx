@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -144,6 +144,7 @@ export const CostCalculator = () => {
   const [savingQuote, setSavingQuote] = useState(false);
   const [lastSavedQuoteNumber, setLastSavedQuoteNumber] = useState<number | null>(null);
   const [loadedQuoteData, setLoadedQuoteData] = useState<SavedQuoteData | null>(null);
+  const isLoadingQuoteRef = useRef(false); // Flag to prevent useEffect from resetting colors
   
   const { toast } = useToast();
 
@@ -158,10 +159,12 @@ export const CostCalculator = () => {
     if (selectedTinturariaId && selectedProductId) {
       fetchProductColors(selectedTinturariaId, selectedProductId);
       fetchProductYarns(selectedProductId);
-      // Reset color entries and special discount when product or tinturaria changes
-      setColorEntries([{ colorId: '', quantity: '' }]);
-      setSpecialDiscount('');
-      setResult(null);
+      // Only reset color entries if NOT loading a quote
+      if (!isLoadingQuoteRef.current) {
+        setColorEntries([{ colorId: '', quantity: '' }]);
+        setSpecialDiscount('');
+        setResult(null);
+      }
     } else {
       setProductColors([]);
       setProductYarns([]);
@@ -596,6 +599,9 @@ export const CostCalculator = () => {
 
       const quoteData = data.quote_data as unknown as SavedQuoteData;
       
+      // Set flag to prevent useEffect from resetting colors
+      isLoadingQuoteRef.current = true;
+      
       // Store loaded quote data for display
       setLoadedQuoteData(quoteData);
       
@@ -612,6 +618,11 @@ export const CostCalculator = () => {
         colorId: c.color_id,
         quantity: c.quantity.toString()
       })));
+      
+      // Reset flag after a short delay to allow useEffect to run first
+      setTimeout(() => {
+        isLoadingQuoteRef.current = false;
+      }, 100);
       
       // Build result from saved data (preserving original prices)
       const savedProduct: Product = {
