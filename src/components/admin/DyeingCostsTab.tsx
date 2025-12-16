@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 interface Tinturaria {
   id: string;
   name: string;
+  conversion_factor: number;
 }
 
 interface ProductGroup {
@@ -99,7 +100,7 @@ export const DyeingCostsTab = () => {
   const fetchTinturarias = async () => {
     const { data, error } = await supabase
       .from('tinturarias')
-      .select('id, name')
+      .select('id, name, conversion_factor')
       .order('name');
     
     if (!error && data) {
@@ -539,6 +540,45 @@ export const DyeingCostsTab = () => {
               </Button>
             )}
           </div>
+
+          {/* Fator de Conversão */}
+          {selectedTinturariaId && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Label className="text-card-foreground">Fator de Conversão (R$)</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Valor adicionado ao custo de cada cor nos cálculos
+                  </p>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0,00"
+                    value={selectedTinturaria?.conversion_factor || ''}
+                    onChange={async (e) => {
+                      const value = parseFloat(e.target.value) || 0;
+                      const { error } = await supabase
+                        .from('tinturarias')
+                        .update({ conversion_factor: value })
+                        .eq('id', selectedTinturariaId);
+                      
+                      if (error) {
+                        toast({
+                          variant: 'destructive',
+                          title: 'Erro',
+                          description: 'Erro ao atualizar fator de conversão.'
+                        });
+                      } else {
+                        fetchTinturarias();
+                      }
+                    }}
+                    className="bg-background border-input"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

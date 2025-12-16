@@ -321,16 +321,19 @@ export type Database = {
       }
       tinturarias: {
         Row: {
+          conversion_factor: number
           created_at: string
           id: string
           name: string
         }
         Insert: {
+          conversion_factor?: number
           created_at?: string
           id?: string
           name: string
         }
         Update: {
+          conversion_factor?: number
           created_at?: string
           id?: string
           name?: string
