@@ -283,6 +283,7 @@ export type Database = {
           average_cost_per_kg: number
           created_at: string
           id: string
+          order_number: number
           product_id: string
           quote_data: Json | null
           total_kg: number
@@ -293,6 +294,7 @@ export type Database = {
           average_cost_per_kg: number
           created_at?: string
           id?: string
+          order_number?: number
           product_id: string
           quote_data?: Json | null
           total_kg: number
@@ -303,6 +305,7 @@ export type Database = {
           average_cost_per_kg?: number
           created_at?: string
           id?: string
+          order_number?: number
           product_id?: string
           quote_data?: Json | null
           total_kg?: number
