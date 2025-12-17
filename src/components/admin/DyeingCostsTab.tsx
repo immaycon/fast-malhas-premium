@@ -159,12 +159,18 @@ export const DyeingCostsTab = () => {
 
   const fetchDyeingCosts = async (tinturariaId: string, productIds: string[]) => {
     setLoading(true);
+    console.log('Fetching dyeing costs for tinturaria:', tinturariaId, 'products:', productIds.length);
+    
+    // Fetch with higher limit since groups can have many products
     const { data, error } = await supabase
       .from('dyeing_costs')
       .select('id, product_id, color_id, tinturaria_id, cost, colors(name)')
       .eq('tinturaria_id', tinturariaId)
       .in('product_id', productIds)
-      .order('cost');
+      .order('cost')
+      .limit(5000);
+    
+    console.log('Fetch result - error:', error, 'rows:', data?.length || 0);
     
     if (!error && data) {
       const costs: DyeingCost[] = data.map((dc: any) => ({
@@ -175,7 +181,11 @@ export const DyeingCostsTab = () => {
         cost: dc.cost,
         color_name: dc.colors?.name
       }));
+      console.log('Setting dyeingCosts with', costs.length, 'entries, unique colors:', 
+        new Set(costs.map(c => c.color_id)).size);
       setDyeingCosts(costs);
+    } else if (error) {
+      console.error('Fetch error:', error);
     }
     setLoading(false);
   };
@@ -359,27 +369,37 @@ export const DyeingCostsTab = () => {
     if (selectionMode === 'group' && selectedGroupId) {
       const targetProductIds = products.filter(p => p.group_id === selectedGroupId).map(p => p.id);
       
-      const { error } = await supabase
+      console.log('Updating color:', dyeingCost.color_name, 'with cost:', cost);
+      console.log('Target product IDs count:', targetProductIds.length);
+      console.log('Tinturaria ID:', selectedTinturariaId);
+      console.log('Color ID:', dyeingCost.color_id);
+      
+      const { error, data } = await supabase
         .from('dyeing_costs')
         .update({ cost })
         .eq('tinturaria_id', selectedTinturariaId)
         .eq('color_id', dyeingCost.color_id)
-        .in('product_id', targetProductIds);
+        .in('product_id', targetProductIds)
+        .select();
+
+      console.log('Update result - error:', error, 'updated rows:', data?.length || 0);
 
       if (error) {
         toast({
           variant: 'destructive',
           title: 'Erro',
-          description: 'Erro ao atualizar custos.'
+          description: 'Erro ao atualizar custos: ' + error.message
         });
       } else {
         toast({
           title: 'Sucesso',
-          description: `Custo atualizado para ${targetProductIds.length} artigos do grupo.`
+          description: `Custo atualizado para ${data?.length || 0} registros.`
         });
         setEditingId(null);
         setEditCost('');
-        fetchDyeingCosts(selectedTinturariaId, targetProductIds);
+        
+        // Refetch the data
+        await fetchDyeingCosts(selectedTinturariaId, targetProductIds);
       }
     } else {
       const { error } = await supabase
