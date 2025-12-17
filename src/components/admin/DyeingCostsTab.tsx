@@ -159,35 +159,50 @@ export const DyeingCostsTab = () => {
 
   const fetchDyeingCosts = async (tinturariaId: string, productIds: string[]) => {
     setLoading(true);
-    console.log('Fetching dyeing costs for tinturaria:', tinturariaId, 'products:', productIds.length);
-    
-    // Fetch with higher limit since groups can have many products
-    const { data, error } = await supabase
-      .from('dyeing_costs')
-      .select('id, product_id, color_id, tinturaria_id, cost, colors(name)')
-      .eq('tinturaria_id', tinturariaId)
-      .in('product_id', productIds)
-      .order('cost')
-      .limit(5000);
-    
-    console.log('Fetch result - error:', error, 'rows:', data?.length || 0);
-    
-    if (!error && data) {
-      const costs: DyeingCost[] = data.map((dc: any) => ({
+    try {
+      const pageSize = 1000;
+      let from = 0;
+      let allRows: any[] = [];
+
+      while (true) {
+        const { data, error } = await supabase
+          .from('dyeing_costs')
+          .select('id, product_id, color_id, tinturaria_id, cost, colors(name)')
+          .eq('tinturaria_id', tinturariaId)
+          .in('product_id', productIds)
+          .order('id', { ascending: true })
+          .range(from, from + pageSize - 1);
+
+        if (error) throw error;
+
+        const rows = data ?? [];
+        allRows = allRows.concat(rows);
+
+        if (rows.length < pageSize) break;
+        from += pageSize;
+      }
+
+      const costs: DyeingCost[] = allRows.map((dc: any) => ({
         id: dc.id,
         product_id: dc.product_id,
         color_id: dc.color_id,
         tinturaria_id: dc.tinturaria_id,
         cost: dc.cost,
-        color_name: dc.colors?.name
+        color_name: dc.colors?.name,
       }));
-      console.log('Setting dyeingCosts with', costs.length, 'entries, unique colors:', 
-        new Set(costs.map(c => c.color_id)).size);
+
       setDyeingCosts(costs);
-    } else if (error) {
-      console.error('Fetch error:', error);
+    } catch (err: any) {
+      console.error('fetchDyeingCosts error:', err);
+      setDyeingCosts([]);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao carregar custos da tinturaria.',
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleAddTinturaria = async () => {
@@ -368,37 +383,32 @@ export const DyeingCostsTab = () => {
     // If in group mode, update all products in the group with this color
     if (selectionMode === 'group' && selectedGroupId) {
       const targetProductIds = products.filter(p => p.group_id === selectedGroupId).map(p => p.id);
-      
-      console.log('Updating color:', dyeingCost.color_name, 'with cost:', cost);
-      console.log('Target product IDs count:', targetProductIds.length);
-      console.log('Tinturaria ID:', selectedTinturariaId);
-      console.log('Color ID:', dyeingCost.color_id);
-      
+
+      const upsertData = targetProductIds.map((productId) => ({
+        tinturaria_id: selectedTinturariaId,
+        product_id: productId,
+        color_id: dyeingCost.color_id,
+        cost,
+      }));
+
       const { error, data } = await supabase
         .from('dyeing_costs')
-        .update({ cost })
-        .eq('tinturaria_id', selectedTinturariaId)
-        .eq('color_id', dyeingCost.color_id)
-        .in('product_id', targetProductIds)
-        .select();
-
-      console.log('Update result - error:', error, 'updated rows:', data?.length || 0);
+        .upsert(upsertData, { onConflict: 'product_id,color_id,tinturaria_id' })
+        .select('id');
 
       if (error) {
         toast({
           variant: 'destructive',
           title: 'Erro',
-          description: 'Erro ao atualizar custos: ' + error.message
+          description: 'Erro ao atualizar custos: ' + error.message,
         });
       } else {
         toast({
           title: 'Sucesso',
-          description: `Custo atualizado para ${data?.length || 0} registros.`
+          description: `Custo atualizado para ${data?.length ?? targetProductIds.length} registros.`,
         });
         setEditingId(null);
         setEditCost('');
-        
-        // Refetch the data
         await fetchDyeingCosts(selectedTinturariaId, targetProductIds);
       }
     } else {
