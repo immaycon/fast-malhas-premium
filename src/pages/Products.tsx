@@ -30,7 +30,7 @@ import img104SuplexRajado from "@/assets/products/104_SUPLEX_RAJADO.jpeg";
 import img109SuplexLiso280 from "@/assets/products/109_SUPLEX_LISO_280G.png";
 import img114Micropower from "@/assets/products/114_MICROPOWER_300G.png";
 import img116SuplexBlack from "@/assets/products/116_SUPLEX_BLACK.png";
-import img301MeiaMalha from "@/assets/products/301_MEIA_MALHA_PP.jpg";
+import img301MeiaMalha from "@/assets/products/301_MEIA_MALHA_PP_NEW.jpg";
 import img304MeiaMalha from "@/assets/products/304_MEIA_MALHA_PP.jpg";
 import img306MalhaMescla from "@/assets/products/306_MALHA_PP_RAMADA_MESCLA.jpg";
 import img401Microfibra from "@/assets/products/401_MICROFIBRA_POLIAMIDA_NEW.jpg";
