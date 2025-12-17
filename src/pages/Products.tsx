@@ -18,20 +18,27 @@ import fabricBeige from "@/assets/fabric-texture-beige.jpg";
 // Import real product images
 import img001RomanticLisa from "@/assets/products/001_Romantic_Lisa.jpg";
 import img003RomanticSlim from "@/assets/products/003_Romantic_Slim_Alto_Rendimento.jpg";
+import img005RomanticSublimatica from "@/assets/products/005_ROMANTIC_SUBLIMATICA.jpg";
 import img009RomanticEstampado from "@/assets/products/009_ROMANTIC_ESTAMPADO.jpeg";
 import img09ACRomanticArcoIrisOld from "@/assets/products/09AC_-_ROMANTIC_ARCO_IRIS.jpg";
 import img09ACRomanticArcoIris from "@/assets/products/09AC_ROMANTIC_ARCO_IRIS_NEW.jpg";
 import img010RomanticMescla from "@/assets/products/010_ROMANTIC_MESCLA.jpg";
 import img075MicroPremium from "@/assets/products/075_Micro_Premium.jpeg";
-import img101SuplexLiso from "@/assets/products/101_SUPLEX_LISO_320G.jpg";
-import img102SuplexZero from "@/assets/products/102_SUPLEX_LISO_ZERO_TRANSPARENCIA_280G.jpg";
-import img114Micropower from "@/assets/products/114_MICROPOWER_280G.jpg";
+import img101SuplexLiso from "@/assets/products/101_SUPLEX_LISO_320G_NEW.png";
+import img102SuplexZero from "@/assets/products/102_SUPLEX_ZERO_TRANSPARENCIA.png";
+import img104SuplexRajado from "@/assets/products/104_SUPLEX_RAJADO.jpeg";
+import img109SuplexLiso280 from "@/assets/products/109_SUPLEX_LISO_280G.png";
+import img114Micropower from "@/assets/products/114_MICROPOWER_300G.png";
+import img116SuplexBlack from "@/assets/products/116_SUPLEX_BLACK.png";
 import img301MeiaMalha from "@/assets/products/301_MEIA_MALHA_PP.jpg";
 import img304MeiaMalha from "@/assets/products/304_MEIA_MALHA_PP.jpg";
 import img306MalhaMescla from "@/assets/products/306_MALHA_PP_RAMADA_MESCLA.jpg";
+import img401Microfibra from "@/assets/products/401_MICROFIBRA_POLIAMIDA_NEW.jpg";
 import img401MicrofibraLight from "@/assets/products/401_MICROFIBRA_POLIAMIDA_LIGHT.jpg";
 import img401MicrofibraMax from "@/assets/products/401_MICROFIBRA_POLIAMIDA_PEDRINI.jpg";
 import img501SuplexPoliamida from "@/assets/products/501_SUPLEX_POLIAMIDA.jpg";
+import img503SuplexPoliamidaPower from "@/assets/products/503_SUPLEX_POLIAMIDA_POWER.png";
+import img505SuplexPoliamidaPower from "@/assets/products/505_SUPLEX_POLIAMIDA_POWER.png";
 import img801MeiaMalhaPV from "@/assets/products/801_meia_malha_pv.jpg";
 
 const fabricImages = [fabricWhite, fabricBlack, fabricNavy, fabricCoral, fabricOlive, fabricBeige];
@@ -46,8 +53,8 @@ const getProductImageFromMap = (code: string, name: string): string | null => {
   if (fullCode.includes("401")) {
     if (nameLower.includes("max")) return img401MicrofibraMax;
     if (nameLower.includes("light")) return img401MicrofibraLight;
-    // Other 401 variants use fallback textures
-    return null;
+    // Other 401 variants use the new generic 401 image
+    return img401Microfibra;
   }
   
   // Specific 001 variants
@@ -76,15 +83,21 @@ const getProductImageFromMap = (code: string, name: string): string | null => {
   // Standard code-based mappings
   const productImageMap: Record<string, string> = {
     "003": img003RomanticSlim,
+    "005": img005RomanticSublimatica,
     "09AC": img09ACRomanticArcoIris,
     "075": img075MicroPremium,
     "101": img101SuplexLiso,
     "102": img102SuplexZero,
+    "104": img104SuplexRajado,
+    "109": img109SuplexLiso280,
     "114": img114Micropower,
+    "116": img116SuplexBlack,
     "301": img301MeiaMalha,
     "304": img304MeiaMalha,
     "306": img306MalhaMescla,
     "501": img501SuplexPoliamida,
+    "503": img503SuplexPoliamidaPower,
+    "505": img505SuplexPoliamidaPower,
     "801": img801MeiaMalhaPV,
   };
   
