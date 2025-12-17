@@ -886,6 +886,16 @@ export const CostCalculator = () => {
 
     yPos += 10;
 
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const footerY = pageHeight - 20;
+    const neededSpace = 12 + 8 + 40 + 25; // Payment box + gap + totals box + margin to footer
+
+    // Check if we need a new page for the summary section
+    if (yPos + neededSpace > footerY) {
+      doc.addPage();
+      yPos = 30;
+    }
+
     // Payment Method Box (destaque)
     const paymentLabel = paymentMethod === 'a_vista' 
       ? 'Pedido: à vista' 
@@ -899,38 +909,37 @@ export const CostCalculator = () => {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text(`FORMA DE PAGAMENTO: ${paymentLabel}`, margin + 5, yPos + 8);
-    yPos += 18;
+    yPos += 20;
 
     // Totals Box
     doc.setFillColor(...primaryColor);
-    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 35, 3, 3, 'F');
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 40, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(summaryTitle, margin + 5, yPos + 10);
+    doc.text(summaryTitle, margin + 5, yPos + 12);
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total em KG: ${formatBRL(result.totalKg)} KG`, margin + 5, yPos + 20);
+    doc.text(`Total em KG: ${formatBRL(result.totalKg)} KG`, margin + 5, yPos + 24);
     
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
     const totalText = `VALOR TOTAL ESTIMADO: R$ ${formatBRL(result.totalValue)}`;
     const totalX = pageWidth - margin - 5;
-    const totalY = yPos + 28;
+    const totalY = yPos + 32;
     doc.text(totalText, totalX, totalY, { align: 'right' });
     // Underline
     const textWidth = doc.getTextWidth(totalText);
     doc.setDrawColor(255, 255, 255);
-    doc.line(totalX - textWidth, totalY + 1, totalX, totalY + 1);
+    doc.line(totalX - textWidth, totalY + 2, totalX, totalY + 2);
 
-    // Footer
-    const footerY = doc.internal.pageSize.getHeight() - 15;
+    // Footer - positioned at fixed bottom position
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('FAST Malhas - Qualidade e Confiança em Malhas', pageWidth / 2, footerY, { align: 'center' });
+    doc.text('FAST Malhas - Qualidade e Confiança em Malhas', pageWidth / 2, pageHeight - 10, { align: 'center' });
 
     // Generate filename
     const sanitizedName = customerName.trim().replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
