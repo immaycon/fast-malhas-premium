@@ -268,7 +268,7 @@ export const DyeingCostsTab = () => {
       return;
     }
 
-    const cost = parseFloat(newCost);
+    const cost = parseFloat(newCost.replace(',', '.'));
     if (isNaN(cost) || cost < 0) {
       toast({
         variant: 'destructive',
@@ -342,8 +342,8 @@ export const DyeingCostsTab = () => {
   };
 
   const handleUpdateCost = async (id: string) => {
-    const cost = parseFloat(editCost);
-    if (isNaN(cost) || cost <= 0) {
+    const cost = parseFloat(editCost.replace(',', '.'));
+    if (isNaN(cost) || cost < 0) {
       toast({
         variant: 'destructive',
         title: 'Erro',
