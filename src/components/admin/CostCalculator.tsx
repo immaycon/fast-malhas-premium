@@ -690,7 +690,8 @@ export const CostCalculator = () => {
   };
 
   // Get available colors - ONLY from productColors (tinturaria + product specific)
-  const availableColors = productColors;
+  // Filter out colors with R$0.00 cost (not configured)
+  const availableColors = productColors.filter(color => color.dyeing_cost > 0);
 
   const generatePDF = async (type: 'pedido' | 'orcamento') => {
     if (!result || !customerName.trim()) {
@@ -1124,13 +1125,13 @@ export const CostCalculator = () => {
           )}
 
           {/* Color Entries */}
-          {productColors.length > 0 && (
+          {availableColors.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label className="text-card-foreground">
                   Cores e Quantidades
                   <span className="text-xs text-muted-foreground ml-2">
-                    ({productColors.length} cores disponíveis)
+                    ({availableColors.length} cores com custo cadastrado)
                   </span>
                 </Label>
                 <Button 
@@ -1192,7 +1193,7 @@ export const CostCalculator = () => {
 
           <Button 
             onClick={calculateCost}
-            disabled={loading || productColors.length === 0}
+            disabled={loading || availableColors.length === 0}
             className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-poppins font-bold"
           >
             {loading ? 'Calculando...' : 'Calcular Custo'}
