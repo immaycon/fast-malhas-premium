@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Calculator, Plus, Trash2, FileText, AlertCircle, Download, Factory, Search, Save, Loader2 } from 'lucide-react';
+import { Calculator, Plus, Trash2, FileText, AlertCircle, Download, Factory, Search, Save, Loader2, Send } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 // Format number to Brazilian currency format (10.000,00)
@@ -143,6 +143,7 @@ export const CostCalculator = () => {
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [savingQuote, setSavingQuote] = useState(false);
   const [lastSavedQuoteNumber, setLastSavedQuoteNumber] = useState<number | null>(null);
+  const [sendingToERP, setSendingToERP] = useState(false);
   const [loadedQuoteData, setLoadedQuoteData] = useState<SavedQuoteData | null>(null);
   const isLoadingQuoteRef = useRef(false); // Flag to prevent useEffect from resetting colors
   
@@ -927,6 +928,89 @@ export const CostCalculator = () => {
     });
   };
 
+  // Função para enviar pedido ao sistema ERP
+  const enviarPedidoParaERP = async () => {
+    if (!result || !customerName.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Preencha o nome do cliente e calcule o custo antes de cadastrar o pedido.'
+      });
+      return;
+    }
+
+    if (!lastSavedQuoteNumber) {
+      toast({
+        variant: 'destructive',
+        title: 'Salve a cotação primeiro',
+        description: 'É necessário salvar a cotação no sistema antes de cadastrar o pedido no ERP.'
+      });
+      return;
+    }
+
+    setSendingToERP(true);
+    try {
+      const paymentLabel = paymentMethod === 'a_vista' 
+        ? 'à vista' 
+        : paymentMethod === 'a_prazo' 
+          ? 'a prazo' 
+          : `ADM - ${admDescription}`;
+
+      const dadosPedido = {
+        numero_pedido: lastSavedQuoteNumber.toString().padStart(4, '0'),
+        cliente: customerName,
+        tinturaria: result.tinturaria.name,
+        artigo_codigo: result.product.code,
+        artigo_nome: result.product.name,
+        composicao: result.product.composition || '',
+        gramatura: `${result.product.weight_gsm} g/m²`,
+        largura: `${result.product.width_cm} cm`,
+        rendimento: `${result.product.yield_m_kg} m/kg`,
+        custo_medio_kg: result.averageCostPerKg,
+        forma_pagamento: paymentLabel,
+        prazo_pagamento: paymentMethod === 'a_prazo' ? admDescription : '',
+        total_kg: result.totalKg,
+        valor_total: result.totalValue,
+        itens: result.colors.map(c => ({
+          cor: c.colorName,
+          qtd: c.quantity,
+          preco: c.costPerKg,
+          subtotal: c.totalCost
+        })),
+        data_pedido: new Date().toISOString()
+      };
+
+      const response = await fetch(
+        'https://seigdujsdwimmyfolmjq.supabase.co/functions/v1/create-draft-order',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dadosPedido)
+        }
+      );
+      
+      const resultData = await response.json();
+      
+      if (resultData.success) {
+        toast({
+          title: 'Pedido cadastrado!',
+          description: `Pedido ${resultData.numero || lastSavedQuoteNumber} foi cadastrado no sistema ERP com sucesso!`
+        });
+      } else {
+        throw new Error(resultData.error || 'Erro desconhecido');
+      }
+    } catch (error: any) {
+      console.error('Erro ao enviar para ERP:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao cadastrar pedido',
+        description: error.message || 'Não foi possível cadastrar o pedido no sistema ERP.'
+      });
+    } finally {
+      setSendingToERP(false);
+    }
+  };
+
   const selectedProduct = products.find(p => p.id === selectedProductId);
   const selectedTinturaria = tinturarias.find(t => t.id === selectedTinturariaId);
 
@@ -1367,6 +1451,25 @@ export const CostCalculator = () => {
                     <span className="truncate">Criar Pedido (PDF)</span>
                   </Button>
                 </div>
+
+                {/* Botão Cadastrar Pedido no Sistema ERP */}
+                <Button
+                  onClick={enviarPedidoParaERP}
+                  disabled={sendingToERP || !lastSavedQuoteNumber}
+                  className="w-full bg-[#6366F1] hover:bg-[#4F46E5] text-white font-poppins font-bold text-sm sm:text-base py-3"
+                >
+                  {sendingToERP ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      📤 Cadastrar pedido no sistema
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           ) : (
