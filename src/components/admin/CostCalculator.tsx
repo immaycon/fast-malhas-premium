@@ -704,8 +704,10 @@ export const CostCalculator = () => {
   };
 
   // Get available colors - ONLY from productColors (tinturaria + product specific)
-  // Filter out colors with R$0.00 cost (not configured)
-  const availableColors = productColors.filter(color => color.dyeing_cost > 0);
+  // Filter out colors with R$0.00 cost (not configured) and sort alphabetically
+  const availableColors = productColors
+    .filter(color => color.dyeing_cost > 0)
+    .sort((a, b) => a.color_name.localeCompare(b.color_name, 'pt-BR'));
 
   const generatePDF = async (type: 'pedido' | 'orcamento') => {
     if (!result || !customerName.trim()) {
