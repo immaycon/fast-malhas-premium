@@ -441,12 +441,12 @@ export const CostCalculator = () => {
         const dyeingCost = dyeingMap[entry.colorId] || 0;
 
         // Fórmula correta:
-        // 1. Base = (Fios + Tecelagem + Tinturaria + Fator Conversão + Desconto Especial) / Fator de Aproveitamento
-        // 2. Final = Base + Frete (frete NÃO é dividido pelo aproveitamento)
-        const colorTotalCost = dyeingCost + conversionFactorValue + specialDiscountValue;
+        // 1. Base = (Fios + Tecelagem + Tinturaria + Desconto Especial) / Fator de Aproveitamento
+        // 2. Final = Base + Frete + Fator Conversão Global (NÃO são divididos pelo aproveitamento)
+        const colorTotalCost = dyeingCost + specialDiscountValue;
         const baseCost = totalYarnCost + product.weaving_cost + colorTotalCost;
         const costWithEfficiency = baseCost / product.efficiency_factor;
-        const costPerKg = costWithEfficiency + freightCost; // Frete adicionado APÓS divisão
+        const costPerKg = costWithEfficiency + freightCost + conversionFactorValue; // Frete e Conversão adicionados APÓS divisão
         const totalCost = costPerKg * quantity;
 
         calculatedColors.push({
