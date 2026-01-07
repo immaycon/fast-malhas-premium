@@ -449,12 +449,11 @@ export const CostCalculator = () => {
         const quantity = parseFloat(entry.quantity);
         const dyeingCost = dyeingMap[entry.colorId] || 0;
 
-        // Fórmula correta:
-        // 1. Base = (Fios + Tecelagem + Tinturaria - Desconto Especial) / Fator de Aproveitamento
-        // 2. Final = Base + Frete + Fator Conversão Global (NÃO são divididos pelo aproveitamento)
-        const baseCost = totalYarnCost + product.weaving_cost + dyeingCost - specialDiscountValue;
-        const costWithEfficiency = baseCost / product.efficiency_factor;
-        const costPerKg = costWithEfficiency + freightCost + conversionFactorValue;
+        // Fórmula correta (igual planilha):
+        // Custo/KG = (Fios + Tecelagem + Tinturaria + Frete + Conversão - Desconto) ÷ Aproveitamento
+        // TUDO é dividido pelo fator de aproveitamento
+        const baseCost = totalYarnCost + product.weaving_cost + dyeingCost + freightCost + conversionFactorValue - specialDiscountValue;
+        const costPerKg = baseCost / product.efficiency_factor;
         const totalCost = costPerKg * quantity;
 
         calculatedColors.push({
@@ -1424,6 +1423,20 @@ export const CostCalculator = () => {
                   </div>
                 )}
 
+                {/* Frete */}
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Frete:</span>
+                  <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.freightCost)}</span>
+                </div>
+
+                {/* Fator de Conversão Global */}
+                {result.calculationDetails.conversionFactor > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Fator Conversão Global:</span>
+                    <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.conversionFactor)}</span>
+                  </div>
+                )}
+
                 {/* Desconto Especial */}
                 {result.calculationDetails.specialDiscount > 0 && (
                   <div className="flex justify-between text-xs text-green-600">
@@ -1435,50 +1448,25 @@ export const CostCalculator = () => {
                 {/* Subtotal antes do aproveitamento */}
                 <div className="flex justify-between text-xs font-medium pt-2 border-t border-border/30">
                   <span className="text-card-foreground">
-                    Subtotal (Fios + Tecelagem + Tint. - Desconto):
+                    Subtotal (Base):
                   </span>
                   <span className="text-card-foreground">
                     R$ {formatBRL(
                       result.calculationDetails.totalYarnCost + 
                       result.calculationDetails.weavingCost + 
-                      (result.colors[0]?.dyeingCost || 0) - 
+                      (result.colors[0]?.dyeingCost || 0) +
+                      result.calculationDetails.freightCost +
+                      result.calculationDetails.conversionFactor - 
                       result.calculationDetails.specialDiscount
                     )}
                   </span>
                 </div>
 
                 {/* Divisão pelo Aproveitamento */}
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">
-                    ÷ Fator de Aproveitamento ({(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
-                  </span>
-                  <span className="text-card-foreground">
-                    R$ {formatBRL(
-                      (result.calculationDetails.totalYarnCost + 
-                       result.calculationDetails.weavingCost + 
-                       (result.colors[0]?.dyeingCost || 0) - 
-                       result.calculationDetails.specialDiscount) / result.calculationDetails.efficiencyFactor
-                    )}
-                  </span>
-                </div>
-
-                {/* Frete */}
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">+ Frete:</span>
-                  <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.freightCost)}</span>
-                </div>
-
-                {/* Fator de Conversão Global */}
-                {result.calculationDetails.conversionFactor > 0 && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">+ Fator Conversão Global:</span>
-                    <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.conversionFactor)}</span>
-                  </div>
-                )}
-
-                {/* Custo Final */}
                 <div className="flex justify-between text-sm font-bold pt-2 border-t-2 border-accent/50 bg-accent/10 -mx-4 px-4 py-2 rounded-b-lg">
-                  <span className="text-card-foreground">= CUSTO POR KG ({result.colors[0]?.colorName}):</span>
+                  <span className="text-card-foreground">
+                    ÷ Aproveitamento ({(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%) = CUSTO/KG:
+                  </span>
                   <span className="text-accent">R$ {formatBRL(result.colors[0]?.costPerKg || 0)}</span>
                 </div>
               </div>
