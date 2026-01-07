@@ -379,6 +379,8 @@ export const CostCalculator = () => {
       if (freightError) throw freightError;
       
       const freightCost = freightData?.price ? Number(freightData.price) : 0;
+      // Atualiza o state para exibição no breakdown
+      setCurrentFreightPrice(freightCost);
 
       // Mapear preços por ID de tipo de fio
       const priceMap: Record<string, number> = {};
