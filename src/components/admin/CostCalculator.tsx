@@ -860,10 +860,36 @@ export const CostCalculator = () => {
     doc.text('SUBTOTAL', margin + 140, yPos + 7);
     yPos += 11;
 
-    // Table Rows - taller rows
+    // Table Rows - taller rows with pagination
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
+    
+    // Calculate safe area - leave space for payment box (14) + totals box (38) + footer + margins
+    const footerReservedHeight = 14 + 38 + 12 + 24; // payment + totals + footer + spacing
+    const maxYBeforeFooter = pageHeight - footerReservedHeight;
+    
     result.colors.forEach((color, index) => {
+      // Check if we need a new page
+      if (yPos + 9 > maxYBeforeFooter) {
+        doc.addPage();
+        yPos = 20;
+        
+        // Redraw table header on new page
+        doc.setFillColor(...primaryColor);
+        doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('COR', margin + 5, yPos + 7);
+        doc.text('QTD (KG)', margin + 70, yPos + 7);
+        doc.text('R$/KG', margin + 105, yPos + 7);
+        doc.text('SUBTOTAL', margin + 140, yPos + 7);
+        yPos += 11;
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...textColor);
+      }
+      
       const bgColor: [number, number, number] = index % 2 === 0 ? [255, 255, 255] : [248, 248, 248];
       doc.setFillColor(...bgColor);
       doc.rect(margin, yPos, pageWidth - (margin * 2), 9, 'F');
