@@ -1325,6 +1325,12 @@ export const CostCalculator = () => {
                     </span>
                   </div>
                 ))}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Frete (por KG)</span>
+                  <span className="text-card-foreground">
+                    R$ {result.freightCost.toFixed(2)}
+                  </span>
+                </div>
               </div>
 
               {/* Color Breakdown */}
