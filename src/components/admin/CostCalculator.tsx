@@ -747,9 +747,9 @@ export const CostCalculator = () => {
     // Use ONLY the database order number
     const docNumber = lastSavedQuoteNumber.toString().padStart(4, '0');
 
-    // Header - taller
+    // Header - compact
     doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, pageWidth, 42, 'F');
+    doc.rect(0, 0, pageWidth, 32, 'F');
 
     // Add logo image
     try {
@@ -759,132 +759,133 @@ export const CostCalculator = () => {
         logoImg.onload = resolve;
         logoImg.onerror = reject;
       });
-      doc.addImage(logoImg, 'PNG', margin, 8, 50, 25);
+      doc.addImage(logoImg, 'PNG', margin, 5, 40, 20);
     } catch (e) {
       // Fallback to text if logo fails
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
+      doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.text('FAST Malhas', margin, 26);
+      doc.text('FAST Malhas', margin, 20);
     }
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text(docTitle, margin + 65, 26);
+    doc.text(docTitle, margin + 50, 20);
 
-    // Order number in header - larger
-    doc.setFontSize(16);
+    // Order number in header
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Nº ${docNumber}`, pageWidth - margin - 25, 26);
+    doc.text(`Nº ${docNumber}`, pageWidth - margin - 22, 20);
 
-    yPos = 55;
+    yPos = 40;
 
-    // Date and Customer - more spacing
+    // Date and Customer - compact
     const today = new Date();
     const dateStr = today.toLocaleDateString('pt-BR');
     doc.setTextColor(...textColor);
-    doc.setFontSize(11);
-    doc.text(`Data: ${dateStr}`, pageWidth - margin - 40, yPos);
+    doc.setFontSize(10);
+    doc.text(`Data: ${dateStr}`, pageWidth - margin - 35, yPos);
 
-    doc.setFontSize(14);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text('Cliente:', margin, yPos);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
-    doc.text(customerName, margin + 25, yPos);
+    doc.text(customerName, margin + 20, yPos);
 
-    yPos += 12;
+    yPos += 8;
 
-    // Tinturaria - larger
-    doc.setFontSize(11);
+    // Tinturaria
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text('Tinturaria:', margin, yPos);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
-    doc.text(result.tinturaria.name, margin + 30, yPos);
+    doc.text(result.tinturaria.name, margin + 25, yPos);
 
-    yPos += 18;
+    yPos += 10;
 
-    // Product Info Box - taller with more spacing
+    // Product Info Box - compact
     doc.setFillColor(245, 245, 245);
-    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 38, 3, 3, 'F');
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 28, 2, 2, 'F');
     doc.setDrawColor(...primaryColor);
     doc.setLineWidth(0.5);
-    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 38, 3, 3, 'S');
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 28, 2, 2, 'S');
 
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor);
-    doc.text('ARTIGO:', margin + 5, yPos + 12);
+    doc.text('ARTIGO:', margin + 4, yPos + 8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
-    doc.text(`${result.product.code} - ${result.product.name}`, margin + 30, yPos + 12);
-    doc.setFontSize(10);
-    doc.text(`${result.product.composition || 'Composição não informada'}`, margin + 5, yPos + 23);
+    doc.text(`${result.product.code} - ${result.product.name}`, margin + 24, yPos + 8);
+    doc.setFontSize(9);
+    doc.text(`${result.product.composition || 'Composição não informada'}`, margin + 4, yPos + 16);
     
     // Ficha técnica inline
     const techText = `Gramatura: ${result.product.weight_gsm || '-'} g/m² | Largura: ${result.product.width_cm || '-'} cm | Rendimento: ${result.product.yield_m_kg || '-'} m/kg`;
-    doc.text(techText, margin + 5, yPos + 33);
+    doc.text(techText, margin + 4, yPos + 24);
 
-    yPos += 48;
+    yPos += 34;
 
-    // Custo Médio por KG em destaque - taller
+    // Custo Médio por KG em destaque - compact
     doc.setFillColor(...primaryColor);
-    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 16, 3, 3, 'F');
+    doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 12, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(13);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(`CUSTO MÉDIO POR KG: R$ ${formatBRL(result.averageCostPerKg)}`, margin + 5, yPos + 11);
+    doc.text(`CUSTO MÉDIO POR KG: R$ ${formatBRL(result.averageCostPerKg)}`, margin + 4, yPos + 8);
 
-    yPos += 26;
+    yPos += 18;
 
     // Color Details Table Header
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...primaryColor);
     doc.text('DETALHAMENTO POR COR', margin, yPos);
-    yPos += 10;
+    yPos += 6;
 
-    // Table Header - taller
+    // Table Header - compact
     doc.setFillColor(...primaryColor);
-    doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+    doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('COR', margin + 5, yPos + 7);
-    doc.text('QTD (KG)', margin + 70, yPos + 7);
-    doc.text('R$/KG', margin + 105, yPos + 7);
-    doc.text('SUBTOTAL', margin + 140, yPos + 7);
-    yPos += 11;
+    doc.text('COR', margin + 4, yPos + 5.5);
+    doc.text('QTD (KG)', margin + 70, yPos + 5.5);
+    doc.text('R$/KG', margin + 105, yPos + 5.5);
+    doc.text('SUBTOTAL', margin + 140, yPos + 5.5);
+    yPos += 8;
 
-    // Table Rows - taller rows with pagination
+    // Table Rows - compact rows with pagination
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
     
-    // Calculate safe area - leave space for payment box (14) + totals box (38) + footer + margins
-    const footerReservedHeight = 14 + 38 + 12 + 24; // payment + totals + footer + spacing
+    // Calculate safe area - leave space for payment box + totals box + footer
+    const rowHeight = 7;
+    const footerReservedHeight = 10 + 28 + 10 + 16; // payment + totals + footer + spacing
     const maxYBeforeFooter = pageHeight - footerReservedHeight;
     
     result.colors.forEach((color, index) => {
       // Check if we need a new page
-      if (yPos + 9 > maxYBeforeFooter) {
+      if (yPos + rowHeight > maxYBeforeFooter) {
         doc.addPage();
         yPos = 20;
         
         // Redraw table header on new page
         doc.setFillColor(...primaryColor);
-        doc.rect(margin, yPos, pageWidth - (margin * 2), 10, 'F');
+        doc.rect(margin, yPos, pageWidth - (margin * 2), 8, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.text('COR', margin + 5, yPos + 7);
-        doc.text('QTD (KG)', margin + 70, yPos + 7);
-        doc.text('R$/KG', margin + 105, yPos + 7);
-        doc.text('SUBTOTAL', margin + 140, yPos + 7);
-        yPos += 11;
+        doc.text('COR', margin + 4, yPos + 5.5);
+        doc.text('QTD (KG)', margin + 70, yPos + 5.5);
+        doc.text('R$/KG', margin + 105, yPos + 5.5);
+        doc.text('SUBTOTAL', margin + 140, yPos + 5.5);
+        yPos += 8;
         
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...textColor);
@@ -892,24 +893,24 @@ export const CostCalculator = () => {
       
       const bgColor: [number, number, number] = index % 2 === 0 ? [255, 255, 255] : [248, 248, 248];
       doc.setFillColor(...bgColor);
-      doc.rect(margin, yPos, pageWidth - (margin * 2), 9, 'F');
+      doc.rect(margin, yPos, pageWidth - (margin * 2), rowHeight, 'F');
       
-      doc.setFontSize(10);
-      doc.text(color.colorName, margin + 5, yPos + 6.5);
-      doc.text(formatBRL(color.quantity), margin + 70, yPos + 6.5);
-      doc.text(`R$ ${formatBRL(color.costPerKg)}`, margin + 105, yPos + 6.5);
-      doc.text(`R$ ${formatBRL(color.totalCost)}`, margin + 140, yPos + 6.5);
-      yPos += 9;
+      doc.setFontSize(9);
+      doc.text(color.colorName, margin + 4, yPos + 5);
+      doc.text(formatBRL(color.quantity), margin + 70, yPos + 5);
+      doc.text(`R$ ${formatBRL(color.costPerKg)}`, margin + 105, yPos + 5);
+      doc.text(`R$ ${formatBRL(color.totalCost)}`, margin + 140, yPos + 5);
+      yPos += rowHeight;
     });
 
     // Calculate remaining space and position elements at bottom
-    const footerY = pageHeight - 12;
-    const totalsBoxHeight = 38;
-    const paymentBoxHeight = 14;
-    const totalsBoxY = footerY - totalsBoxHeight - 8;
-    const paymentBoxY = totalsBoxY - paymentBoxHeight - 8;
+    const footerY = pageHeight - 8;
+    const totalsBoxHeight = 28;
+    const paymentBoxHeight = 10;
+    const totalsBoxY = footerY - totalsBoxHeight - 4;
+    const paymentBoxY = totalsBoxY - paymentBoxHeight - 4;
 
-    // Payment Method Box - positioned dynamically
+    // Payment Method Box
     const paymentLabel = paymentMethod === 'a_vista' 
       ? 'Pedido: à vista' 
       : paymentMethod === 'a_prazo' 
@@ -917,40 +918,40 @@ export const CostCalculator = () => {
         : `Pedido: ADM - ${admDescription}`;
     
     doc.setFillColor(70, 70, 70);
-    doc.roundedRect(margin, paymentBoxY, pageWidth - (margin * 2), paymentBoxHeight, 3, 3, 'F');
+    doc.roundedRect(margin, paymentBoxY, pageWidth - (margin * 2), paymentBoxHeight, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text(`FORMA DE PAGAMENTO: ${paymentLabel}`, margin + 5, paymentBoxY + 10);
+    doc.text(`FORMA DE PAGAMENTO: ${paymentLabel}`, margin + 4, paymentBoxY + 7);
 
-    // Totals Box - positioned at bottom
+    // Totals Box
     doc.setFillColor(...primaryColor);
-    doc.roundedRect(margin, totalsBoxY, pageWidth - (margin * 2), totalsBoxHeight, 3, 3, 'F');
+    doc.roundedRect(margin, totalsBoxY, pageWidth - (margin * 2), totalsBoxHeight, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(summaryTitle, margin + 5, totalsBoxY + 12);
+    doc.text(summaryTitle, margin + 4, totalsBoxY + 9);
     
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Total em KG: ${formatBRL(result.totalKg)} KG`, margin + 5, totalsBoxY + 24);
+    doc.text(`Total em KG: ${formatBRL(result.totalKg)} KG`, margin + 4, totalsBoxY + 18);
     
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
     const totalText = `VALOR TOTAL ESTIMADO: R$ ${formatBRL(result.totalValue)}`;
-    const totalX = pageWidth - margin - 5;
-    const totalY = totalsBoxY + 28;
+    const totalX = pageWidth - margin - 4;
+    const totalY = totalsBoxY + 20;
     doc.text(totalText, totalX, totalY, { align: 'right' });
     // Underline
     const textWidth = doc.getTextWidth(totalText);
     doc.setDrawColor(255, 255, 255);
-    doc.setLineWidth(0.5);
-    doc.line(totalX - textWidth, totalY + 2, totalX, totalY + 2);
+    doc.setLineWidth(0.4);
+    doc.line(totalX - textWidth, totalY + 1.5, totalX, totalY + 1.5);
 
-    // Footer - positioned at fixed bottom position
+    // Footer
     doc.setTextColor(150, 150, 150);
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.text('FAST Malhas - Qualidade e Confiança em Malhas', pageWidth / 2, footerY, { align: 'center' });
 
