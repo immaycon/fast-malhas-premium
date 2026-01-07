@@ -499,8 +499,20 @@ export const DyeingCostsTab = () => {
   };
 
   // Get unique colors from dyeing costs
+  // When in group mode, show the first non-zero cost found for each color
+  // This way the displayed cost is more representative of what's actually configured
   const uniqueColors = Array.from(
-    new Map(dyeingCosts.map(dc => [dc.color_id, { id: dc.color_id, name: dc.color_name, cost: dc.cost }])).values()
+    dyeingCosts.reduce((map, dc) => {
+      const existing = map.get(dc.color_id);
+      if (!existing) {
+        // First occurrence - add it
+        map.set(dc.color_id, { id: dc.color_id, name: dc.color_name, cost: dc.cost });
+      } else if (existing.cost === 0 && dc.cost > 0) {
+        // Current has zero cost but new one has a cost - use the non-zero one
+        map.set(dc.color_id, { id: dc.color_id, name: dc.color_name, cost: dc.cost });
+      }
+      return map;
+    }, new Map<string, { id: string; name?: string; cost: number }>()).values()
   );
 
   const filteredCosts = uniqueColors.filter(dc => 
