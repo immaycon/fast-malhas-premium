@@ -435,10 +435,22 @@ export const CostCalculator = () => {
       const conversionFactorValue = storedConversionFactor ? parseFloat(storedConversionFactor) : 0;
       const specialDiscountValue = parseFloat(specialDiscount) || 0;
 
+      // DEBUG: Log all calculation components
+      console.log('=== DEBUG CÁLCULO ===');
+      console.log('totalYarnCost (fios bruto):', totalYarnCost);
+      console.log('weaving_cost (tecelagem):', product.weaving_cost);
+      console.log('efficiency_factor:', product.efficiency_factor);
+      console.log('freightCost:', freightCost);
+      console.log('conversionFactorValue:', conversionFactorValue);
+      console.log('specialDiscountValue:', specialDiscountValue);
+
       for (const entry of validEntries) {
         const productColor = productColors.find(pc => pc.color_id === entry.colorId);
         const quantity = parseFloat(entry.quantity);
         const dyeingCost = dyeingMap[entry.colorId] || 0;
+
+        console.log('--- Cor:', productColor?.color_name, '---');
+        console.log('dyeingCost (tinturaria):', dyeingCost);
 
         // Fórmula correta:
         // 1. Base = (Fios + Tecelagem + Tinturaria + Fator Conversão + Desconto Especial) / Fator de Aproveitamento
@@ -448,6 +460,12 @@ export const CostCalculator = () => {
         const costWithEfficiency = baseCost / product.efficiency_factor;
         const costPerKg = costWithEfficiency + freightCost; // Frete adicionado APÓS divisão
         const totalCost = costPerKg * quantity;
+
+        console.log('colorTotalCost:', colorTotalCost);
+        console.log('baseCost:', baseCost);
+        console.log('costWithEfficiency:', costWithEfficiency);
+        console.log('costPerKg (final):', costPerKg);
+        console.log('=== FIM DEBUG ===');
 
         calculatedColors.push({
           colorId: entry.colorId,
