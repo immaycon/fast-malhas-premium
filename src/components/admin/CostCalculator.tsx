@@ -62,6 +62,15 @@ interface CalculationResult {
   totalKg: number;
   averageCostPerKg: number;
   totalValue: number;
+  // Detalhes do cálculo para exibição
+  calculationDetails: {
+    totalYarnCost: number;
+    weavingCost: number;
+    efficiencyFactor: number;
+    freightCost: number;
+    conversionFactor: number;
+    specialDiscount: number;
+  };
 }
 
 // Fios principais que podem ser substituídos (não inclui elastano)
@@ -441,19 +450,18 @@ export const CostCalculator = () => {
         const dyeingCost = dyeingMap[entry.colorId] || 0;
 
         // Fórmula correta:
-        // 1. Base = (Fios + Tecelagem + Tinturaria + Desconto Especial) / Fator de Aproveitamento
+        // 1. Base = (Fios + Tecelagem + Tinturaria - Desconto Especial) / Fator de Aproveitamento
         // 2. Final = Base + Frete + Fator Conversão Global (NÃO são divididos pelo aproveitamento)
-        const colorTotalCost = dyeingCost + specialDiscountValue;
-        const baseCost = totalYarnCost + product.weaving_cost + colorTotalCost;
+        const baseCost = totalYarnCost + product.weaving_cost + dyeingCost - specialDiscountValue;
         const costWithEfficiency = baseCost / product.efficiency_factor;
-        const costPerKg = costWithEfficiency + freightCost + conversionFactorValue; // Frete e Conversão adicionados APÓS divisão
+        const costPerKg = costWithEfficiency + freightCost + conversionFactorValue;
         const totalCost = costPerKg * quantity;
 
         calculatedColors.push({
           colorId: entry.colorId,
           colorName: productColor?.color_name || 'Desconhecida',
           quantity,
-          dyeingCost: colorTotalCost, // Now includes conversion + special discount
+          dyeingCost,
           costPerKg,
           totalCost
         });
@@ -473,7 +481,15 @@ export const CostCalculator = () => {
         freightCost,
         totalKg,
         averageCostPerKg,
-        totalValue
+        totalValue,
+        calculationDetails: {
+          totalYarnCost,
+          weavingCost: product.weaving_cost,
+          efficiencyFactor: product.efficiency_factor,
+          freightCost,
+          conversionFactor: conversionFactorValue,
+          specialDiscount: specialDiscountValue
+        }
       });
 
     } catch (error) {
@@ -676,6 +692,9 @@ export const CostCalculator = () => {
         proportion: y.proportion
       }));
 
+      // Calcular totalYarnCost para o breakdown
+      const totalYarnCost = savedYarnCosts.reduce((acc, y) => acc + y.cost * y.proportion, 0);
+
       setResult({
         product: savedProduct,
         tinturaria: savedTinturaria,
@@ -685,7 +704,15 @@ export const CostCalculator = () => {
         freightCost: quoteData.freight_price,
         totalKg: data.total_kg,
         averageCostPerKg: data.average_cost_per_kg,
-        totalValue: data.total_value
+        totalValue: data.total_value,
+        calculationDetails: {
+          totalYarnCost,
+          weavingCost: quoteData.weaving_cost,
+          efficiencyFactor: quoteData.efficiency_factor,
+          freightCost: quoteData.freight_price,
+          conversionFactor: quoteData.conversion_factor || 0,
+          specialDiscount: quoteData.special_discount || 0
+        }
       });
 
       // Set the order number so PDFs can be generated without re-saving
@@ -1358,24 +1385,101 @@ export const CostCalculator = () => {
                 <p className="text-sm text-muted-foreground">{result.product.composition}</p>
               </div>
 
-              {/* Yarn Costs Breakdown - valores divididos pelo fator de aproveitamento */}
-              <div className="space-y-2">
-                <h5 className="text-sm font-medium text-card-foreground">Custos Base (por KG)</h5>
-                {result.yarnCosts.map((yarn, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {yarn.name} ({(yarn.proportion * 100).toFixed(0)}%)
-                    </span>
-                    <span className="text-card-foreground">
-                      R$ {((yarn.cost * yarn.proportion) / result.product.efficiency_factor).toFixed(2)}
-                    </span>
+              {/* Breakdown Detalhado do Cálculo */}
+              <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-border/50">
+                <h5 className="text-sm font-bold text-card-foreground flex items-center gap-2">
+                  📊 Detalhamento Completo do Cálculo
+                </h5>
+                
+                {/* Fios */}
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">CUSTO DOS FIOS:</p>
+                  {result.yarnCosts.map((yarn, i) => (
+                    <div key={i} className="flex justify-between text-xs ml-2">
+                      <span className="text-muted-foreground">
+                        {yarn.name} (R$ {formatBRL(yarn.cost)} × {(yarn.proportion * 100).toFixed(0)}%)
+                      </span>
+                      <span className="text-card-foreground">
+                        R$ {formatBRL(yarn.cost * yarn.proportion)}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-xs font-medium ml-2 pt-1 border-t border-border/30">
+                    <span className="text-card-foreground">Total Fios:</span>
+                    <span className="text-accent">R$ {formatBRL(result.calculationDetails.totalYarnCost)}</span>
                   </div>
-                ))}
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Frete</span>
+                </div>
+
+                {/* Tecelagem */}
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Tecelagem:</span>
+                  <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.weavingCost)}</span>
+                </div>
+
+                {/* Tinturaria (primeira cor como exemplo) */}
+                {result.colors.length > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Tinturaria ({result.colors[0].colorName}):</span>
+                    <span className="text-card-foreground">R$ {formatBRL(result.colors[0].dyeingCost)}</span>
+                  </div>
+                )}
+
+                {/* Desconto Especial */}
+                {result.calculationDetails.specialDiscount > 0 && (
+                  <div className="flex justify-between text-xs text-green-600">
+                    <span>Desconto Especial:</span>
+                    <span>- R$ {formatBRL(result.calculationDetails.specialDiscount)}</span>
+                  </div>
+                )}
+
+                {/* Subtotal antes do aproveitamento */}
+                <div className="flex justify-between text-xs font-medium pt-2 border-t border-border/30">
                   <span className="text-card-foreground">
-                    R$ {result.freightCost.toFixed(2)}
+                    Subtotal (Fios + Tecelagem + Tint. - Desconto):
                   </span>
+                  <span className="text-card-foreground">
+                    R$ {formatBRL(
+                      result.calculationDetails.totalYarnCost + 
+                      result.calculationDetails.weavingCost + 
+                      (result.colors[0]?.dyeingCost || 0) - 
+                      result.calculationDetails.specialDiscount
+                    )}
+                  </span>
+                </div>
+
+                {/* Divisão pelo Aproveitamento */}
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    ÷ Fator de Aproveitamento ({(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
+                  </span>
+                  <span className="text-card-foreground">
+                    R$ {formatBRL(
+                      (result.calculationDetails.totalYarnCost + 
+                       result.calculationDetails.weavingCost + 
+                       (result.colors[0]?.dyeingCost || 0) - 
+                       result.calculationDetails.specialDiscount) / result.calculationDetails.efficiencyFactor
+                    )}
+                  </span>
+                </div>
+
+                {/* Frete */}
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">+ Frete:</span>
+                  <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.freightCost)}</span>
+                </div>
+
+                {/* Fator de Conversão Global */}
+                {result.calculationDetails.conversionFactor > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">+ Fator Conversão Global:</span>
+                    <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.conversionFactor)}</span>
+                  </div>
+                )}
+
+                {/* Custo Final */}
+                <div className="flex justify-between text-sm font-bold pt-2 border-t-2 border-accent/50 bg-accent/10 -mx-4 px-4 py-2 rounded-b-lg">
+                  <span className="text-card-foreground">= CUSTO POR KG ({result.colors[0]?.colorName}):</span>
+                  <span className="text-accent">R$ {formatBRL(result.colors[0]?.costPerKg || 0)}</span>
                 </div>
               </div>
 
