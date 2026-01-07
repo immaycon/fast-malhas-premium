@@ -146,14 +146,27 @@ export const CostCalculator = () => {
   const [sendingToERP, setSendingToERP] = useState(false);
   const [loadedQuoteData, setLoadedQuoteData] = useState<SavedQuoteData | null>(null);
   const isLoadingQuoteRef = useRef(false); // Flag to prevent useEffect from resetting colors
+  const [currentFreightPrice, setCurrentFreightPrice] = useState<number>(0);
   
   const { toast } = useToast();
+
+  const fetchCurrentFreight = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await supabase
+      .from('freight_prices')
+      .select('price')
+      .eq('effective_date', today)
+      .maybeSingle();
+    
+    setCurrentFreightPrice(data?.price ? Number(data.price) : 0);
+  };
 
   useEffect(() => {
     fetchTinturarias();
     fetchProducts();
     fetchAllColors();
     fetchAllYarnTypes();
+    fetchCurrentFreight();
   }, []);
 
   useEffect(() => {
@@ -1328,7 +1341,7 @@ export const CostCalculator = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete (por KG)</span>
                   <span className="text-card-foreground">
-                    R$ {result.freightCost.toFixed(2)}
+                    R$ {currentFreightPrice.toFixed(2)}
                   </span>
                 </div>
               </div>
