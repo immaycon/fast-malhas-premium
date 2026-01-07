@@ -1368,12 +1368,6 @@ export const CostCalculator = () => {
                   </div>
                 ))}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tecelagem</span>
-                  <span className="text-card-foreground">
-                    R$ {(result.weavingCost / result.product.efficiency_factor).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>
                   <span className="text-card-foreground">
                     R$ {(result.freightCost / result.product.efficiency_factor).toFixed(2)}
