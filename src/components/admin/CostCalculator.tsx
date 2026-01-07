@@ -1354,23 +1354,29 @@ export const CostCalculator = () => {
                 <p className="text-sm text-muted-foreground">{result.product.composition}</p>
               </div>
 
-              {/* Yarn Costs Breakdown */}
+              {/* Yarn Costs Breakdown - valores divididos pelo fator de aproveitamento */}
               <div className="space-y-2">
-                <h5 className="text-sm font-medium text-card-foreground">Custos Base</h5>
+                <h5 className="text-sm font-medium text-card-foreground">Custos Base (por KG)</h5>
                 {result.yarnCosts.map((yarn, i) => (
                   <div key={i} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">
                       {yarn.name} ({(yarn.proportion * 100).toFixed(0)}%)
                     </span>
                     <span className="text-card-foreground">
-                      R$ {(yarn.cost * yarn.proportion).toFixed(2)}
+                      R$ {((yarn.cost * yarn.proportion) / result.product.efficiency_factor).toFixed(2)}
                     </span>
                   </div>
                 ))}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Frete (por KG)</span>
+                  <span className="text-muted-foreground">Tecelagem</span>
                   <span className="text-card-foreground">
-                    R$ {currentFreightPrice.toFixed(2)}
+                    R$ {(result.weavingCost / result.product.efficiency_factor).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Frete</span>
+                  <span className="text-card-foreground">
+                    R$ {(result.freightCost / result.product.efficiency_factor).toFixed(2)}
                   </span>
                 </div>
               </div>
