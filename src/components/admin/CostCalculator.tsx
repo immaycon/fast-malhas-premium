@@ -1360,37 +1360,19 @@ export const CostCalculator = () => {
 
               {/* Yarn Costs Breakdown - valores divididos pelo fator de aproveitamento */}
               <div className="space-y-2">
-                <h5 className="text-sm font-medium text-card-foreground">Custos Base (por KG) - Fator Aproveitamento: {(result.product.efficiency_factor * 100).toFixed(0)}%</h5>
-                {result.yarnCosts.map((yarn, i) => {
-                  // Custo base = preço * proporção
-                  const baseCost = yarn.cost * yarn.proportion;
-                  // Custo após aplicar fator de aproveitamento
-                  const costWithEfficiency = baseCost / result.product.efficiency_factor;
-                  return (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {yarn.name} ({(yarn.proportion * 100).toFixed(0)}%) - Base: R$ {baseCost.toFixed(2)}
-                      </span>
-                      <span className="text-card-foreground">
-                        R$ {costWithEfficiency.toFixed(2)}
-                      </span>
-                    </div>
-                  );
-                })}
+                <h5 className="text-sm font-medium text-card-foreground">Custos Base (por KG)</h5>
+                {result.yarnCosts.map((yarn, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {yarn.name} ({(yarn.proportion * 100).toFixed(0)}%)
+                    </span>
+                    <span className="text-card-foreground">
+                      R$ {((yarn.cost * yarn.proportion) / result.product.efficiency_factor).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tecelagem - Base: R$ {result.weavingCost.toFixed(2)}</span>
-                  <span className="text-card-foreground">
-                    R$ {(result.weavingCost / result.product.efficiency_factor).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm border-t border-military/20 pt-2">
-                  <span className="text-muted-foreground font-medium">Subtotal (÷ {(result.product.efficiency_factor * 100).toFixed(0)}%)</span>
-                  <span className="text-card-foreground font-medium">
-                    R$ {((result.yarnCosts.reduce((sum, y) => sum + y.cost * y.proportion, 0) + result.weavingCost) / result.product.efficiency_factor).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Frete (não divide)</span>
+                  <span className="text-muted-foreground">Frete</span>
                   <span className="text-card-foreground">
                     R$ {result.freightCost.toFixed(2)}
                   </span>
