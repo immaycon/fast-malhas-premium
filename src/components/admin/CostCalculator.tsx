@@ -440,11 +440,13 @@ export const CostCalculator = () => {
         const quantity = parseFloat(entry.quantity);
         const dyeingCost = dyeingMap[entry.colorId] || 0;
 
-        // Fórmula: (Σ(Custo Fio × Proporção) + Tecelagem + Tinturaria + Fator Conversão + Desconto Especial + Frete) / Fator de Aproveitamento
-        // Custo cor = dyeingCost + conversionFactorValue + specialDiscountValue
+        // Fórmula correta:
+        // 1. Base = (Fios + Tecelagem + Tinturaria + Fator Conversão + Desconto Especial) / Fator de Aproveitamento
+        // 2. Final = Base + Frete (frete NÃO é dividido pelo aproveitamento)
         const colorTotalCost = dyeingCost + conversionFactorValue + specialDiscountValue;
-        const rawCost = totalYarnCost + product.weaving_cost + colorTotalCost + freightCost;
-        const costPerKg = rawCost / product.efficiency_factor;
+        const baseCost = totalYarnCost + product.weaving_cost + colorTotalCost;
+        const costWithEfficiency = baseCost / product.efficiency_factor;
+        const costPerKg = costWithEfficiency + freightCost; // Frete adicionado APÓS divisão
         const totalCost = costPerKg * quantity;
 
         calculatedColors.push({
