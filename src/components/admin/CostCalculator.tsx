@@ -455,13 +455,13 @@ export const CostCalculator = () => {
 
         // FÓRMULA CORRETA - Cada componente dividido pelo aproveitamento:
         // totalYarnCost já está calculado com (custo/aproveitamento) * proporção
-        // Tecelagem: (custo/aproveitamento) * fator_conversao_global
-        // Tinturaria: (custo/aproveitamento) * fator_conversao_global
-        const weavingCostAdjusted = (product.weaving_cost / efficiencyFactor) * (conversionFactorValue || 1);
-        const dyeingCostAdjusted = (dyeingCost / efficiencyFactor) * (conversionFactorValue || 1);
+        // Tecelagem: (custo / aproveitamento) * 1
+        // Tinturaria: (custo / aproveitamento) * 1
+        const weavingCostAdjusted = (product.weaving_cost / efficiencyFactor) * 1;
+        const dyeingCostAdjusted = (dyeingCost / efficiencyFactor) * 1;
         
-        // Custo/KG = Fios (já ajustados) + Tecelagem (ajustada × conversão) + Tinturaria (ajustada × conversão) + Frete - Desconto
-        const costPerKg = totalYarnCost + weavingCostAdjusted + dyeingCostAdjusted + freightCost - specialDiscountValue;
+        // Custo/KG = Fios (já ajustados) + Tecelagem + Tinturaria + Frete + Fator Conversão Global - Desconto
+        const costPerKg = totalYarnCost + weavingCostAdjusted + dyeingCostAdjusted + freightCost + conversionFactorValue - specialDiscountValue;
         const totalCost = costPerKg * quantity;
 
         calculatedColors.push({
