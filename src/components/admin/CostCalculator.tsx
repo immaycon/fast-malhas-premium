@@ -1463,12 +1463,12 @@ export const CostCalculator = () => {
                   </div>
                 )}
 
-                {/* Custo/KG Final - Cada componente já foi dividido pelo aproveitamento */}
+                {/* Custo/KG Final - Média de todas as cores (mesmo valor que é salvo) */}
                 <div className="flex justify-between text-sm font-bold pt-2 border-t-2 border-accent/50 bg-accent/10 -mx-4 px-4 py-2 rounded-b-lg">
                   <span className="text-card-foreground">
-                    CUSTO/KG (c/ aproveit. {(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
+                    CUSTO MÉDIO/KG (c/ aproveit. {(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
                   </span>
-                  <span className="text-accent">R$ {formatBRL(result.colors[0]?.costPerKg || 0)}</span>
+                  <span className="text-accent">R$ {formatBRL(result.averageCostPerKg)}</span>
                 </div>
               </div>
 
