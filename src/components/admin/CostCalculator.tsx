@@ -1422,17 +1422,21 @@ export const CostCalculator = () => {
                   </div>
                 </div>
 
-                {/* Tecelagem */}
+                {/* Tecelagem (já com aproveitamento) */}
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Tecelagem:</span>
-                  <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.weavingCost)}</span>
+                  <span className="text-muted-foreground">
+                    Tecelagem (R$ {formatBRL(result.calculationDetails.weavingCost)} ÷ {(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
+                  </span>
+                  <span className="text-card-foreground">R$ {formatBRL(result.calculationDetails.weavingCost / result.calculationDetails.efficiencyFactor)}</span>
                 </div>
 
-                {/* Tinturaria (primeira cor como exemplo) */}
+                {/* Tinturaria (já com aproveitamento) */}
                 {result.colors.length > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Tinturaria ({result.colors[0].colorName}):</span>
-                    <span className="text-card-foreground">R$ {formatBRL(result.colors[0].dyeingCost)}</span>
+                    <span className="text-muted-foreground">
+                      Tinturaria ({result.colors[0].colorName}) (R$ {formatBRL(result.colors[0].dyeingCost)} ÷ {(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
+                    </span>
+                    <span className="text-card-foreground">R$ {formatBRL(result.colors[0].dyeingCost / result.calculationDetails.efficiencyFactor)}</span>
                   </div>
                 )}
 
@@ -1458,27 +1462,10 @@ export const CostCalculator = () => {
                   </div>
                 )}
 
-                {/* Subtotal antes do aproveitamento */}
-                <div className="flex justify-between text-xs font-medium pt-2 border-t border-border/30">
-                  <span className="text-card-foreground">
-                    Subtotal (Base):
-                  </span>
-                  <span className="text-card-foreground">
-                    R$ {formatBRL(
-                      result.calculationDetails.totalYarnCost + 
-                      result.calculationDetails.weavingCost + 
-                      (result.colors[0]?.dyeingCost || 0) +
-                      result.calculationDetails.freightCost +
-                      result.calculationDetails.conversionFactor - 
-                      result.calculationDetails.specialDiscount
-                    )}
-                  </span>
-                </div>
-
-                {/* Divisão pelo Aproveitamento */}
+                {/* Custo/KG Final - Cada componente já foi dividido pelo aproveitamento */}
                 <div className="flex justify-between text-sm font-bold pt-2 border-t-2 border-accent/50 bg-accent/10 -mx-4 px-4 py-2 rounded-b-lg">
                   <span className="text-card-foreground">
-                    ÷ Aproveitamento ({(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%) = CUSTO/KG:
+                    CUSTO/KG (c/ aproveit. {(result.calculationDetails.efficiencyFactor * 100).toFixed(0)}%):
                   </span>
                   <span className="text-accent">R$ {formatBRL(result.colors[0]?.costPerKg || 0)}</span>
                 </div>
