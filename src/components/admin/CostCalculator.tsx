@@ -462,8 +462,8 @@ export const CostCalculator = () => {
         const dyeingCostAdjusted = dyeingCost / efficiencyFactor;
         const dryCostsAdjusted = (freightCost + conversionFactorValue) / efficiencyFactor;
         
-        // Custo/KG = Fios + Tecelagem + Tinturaria + Secos - Desconto
-        const costPerKg = totalYarnCost + weavingCostAdjusted + dyeingCostAdjusted + dryCostsAdjusted - specialDiscountValue;
+        // Custo/KG = Fios + Tecelagem + Tinturaria + Secos + Desconto Especial (valor oculto)
+        const costPerKg = totalYarnCost + weavingCostAdjusted + dyeingCostAdjusted + dryCostsAdjusted + specialDiscountValue;
         const totalCost = costPerKg * quantity;
 
         calculatedColors.push({
@@ -1455,13 +1455,7 @@ export const CostCalculator = () => {
                   </div>
                 )}
 
-                {/* Desconto Especial */}
-                {result.calculationDetails.specialDiscount > 0 && (
-                  <div className="flex justify-between text-xs text-green-600">
-                    <span>Desconto Especial:</span>
-                    <span>- R$ {formatBRL(result.calculationDetails.specialDiscount)}</span>
-                  </div>
-                )}
+                {/* Desconto Especial - Oculto da exibição mas incluído no cálculo */}
 
                 {/* Custo/KG Final - Média de todas as cores (mesmo valor que é salvo) */}
                 <div className="flex justify-between text-sm font-bold pt-2 border-t-2 border-accent/50 bg-accent/10 -mx-4 px-4 py-2 rounded-b-lg">
