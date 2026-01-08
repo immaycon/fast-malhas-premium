@@ -1402,16 +1402,20 @@ export const CostCalculator = () => {
                 {/* Fios */}
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-muted-foreground">CUSTO DOS FIOS:</p>
-                  {result.yarnCosts.map((yarn, i) => (
-                    <div key={i} className="flex justify-between text-xs ml-2">
-                      <span className="text-muted-foreground">
-                        {yarn.name} (R$ {formatBRL(yarn.cost)} × {(yarn.proportion * 100).toFixed(0)}%)
-                      </span>
-                      <span className="text-card-foreground">
-                        R$ {formatBRL(yarn.cost * yarn.proportion)}
-                      </span>
-                    </div>
-                  ))}
+                  {result.yarnCosts.map((yarn, i) => {
+                    const effFactor = result.calculationDetails.efficiencyFactor;
+                    const adjustedCost = (yarn.cost / effFactor) * yarn.proportion;
+                    return (
+                      <div key={i} className="flex justify-between text-xs ml-2">
+                        <span className="text-muted-foreground">
+                          {yarn.name} (R$ {formatBRL(yarn.cost)} ÷ {(effFactor * 100).toFixed(0)}% × {(yarn.proportion * 100).toFixed(0)}%)
+                        </span>
+                        <span className="text-card-foreground">
+                          R$ {formatBRL(adjustedCost)}
+                        </span>
+                      </div>
+                    );
+                  })}
                   <div className="flex justify-between text-xs font-medium ml-2 pt-1 border-t border-border/30">
                     <span className="text-card-foreground">Total Fios:</span>
                     <span className="text-accent">R$ {formatBRL(result.calculationDetails.totalYarnCost)}</span>
