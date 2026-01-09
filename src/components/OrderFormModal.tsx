@@ -76,18 +76,27 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
   };
 
   const fetchColorsForSelectedProductGroup = async (productId: string) => {
-    const { data, error } = await supabase.functions.invoke("public-product-group-colors", {
-      body: { productId },
-    });
+    try {
+      const { data, error } = await supabase.functions.invoke("public-product-group-colors", {
+        body: { productId },
+      });
 
-    if (error) {
-      console.error("Error fetching filtered colors:", error);
+      console.log("Edge function response:", { data, error });
+
+      if (error) {
+        console.error("Error fetching filtered colors:", error);
+        setColors([]);
+        return;
+      }
+
+      // O resultado pode estar diretamente em data ou em data.colors
+      const colorsArray = data?.colors || [];
+      console.log("Colors parsed:", colorsArray);
+      setColors(colorsArray);
+    } catch (err) {
+      console.error("Exception fetching colors:", err);
       setColors([]);
-      return;
     }
-
-    const result = (data as { colors?: Color[] } | null) ?? null;
-    setColors(result?.colors || []);
   };
 
   // Atualiza as cores quando o produto é selecionado (mesmo filtro da calculadora, sem custos)
