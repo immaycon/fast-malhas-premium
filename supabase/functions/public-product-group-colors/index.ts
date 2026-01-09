@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
       .from("dyeing_costs")
       .select("color_id")
       .in("product_id", productIds)
+      .not("tinturaria_id", "is", null)
+      .gt("cost", 0)
       .limit(5000);
 
     if (dyeingError) {
