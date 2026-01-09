@@ -30,6 +30,7 @@ interface Product {
   yield_m_kg: number;
   efficiency_factor: number;
   weaving_cost: number;
+  group_id: string | null;
 }
 
 interface Color {
@@ -156,15 +157,9 @@ export const CostCalculator = () => {
   const [loadedQuoteData, setLoadedQuoteData] = useState<SavedQuoteData | null>(null);
   const isLoadingQuoteRef = useRef(false); // Flag to prevent useEffect from resetting colors
   const [currentFreightPrice, setCurrentFreightPrice] = useState<number>(0);
-  const [previousProductCode, setPreviousProductCode] = useState<string>('');
+  const [previousGroupId, setPreviousGroupId] = useState<string | null>(null);
   
   const { toast } = useToast();
-
-  // Extrai o prefixo do código do produto para determinar o grupo de tinturaria (ex: "001", "401")
-  const getDyeingGroupPrefix = (code: string): string => {
-    const match = code.match(/^(\d+)/);
-    return match ? match[1] : '';
-  };
 
   const fetchCurrentFreight = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -188,28 +183,25 @@ export const CostCalculator = () => {
   useEffect(() => {
     if (selectedTinturariaId && selectedProductId) {
       const currentProduct = products.find(p => p.id === selectedProductId);
-      const currentCode = currentProduct?.code || '';
+      const currentGroupId = currentProduct?.group_id || null;
       
       fetchProductColors(selectedTinturariaId, selectedProductId);
       fetchProductYarns(selectedProductId);
       
       // Only reset color entries if NOT loading a quote
       if (!isLoadingQuoteRef.current) {
-        // Verifica se o produto anterior e o atual pertencem ao mesmo grupo de tinturaria
-        const previousPrefix = getDyeingGroupPrefix(previousProductCode);
-        const currentPrefix = getDyeingGroupPrefix(currentCode);
-        const isSameDyeingGroup = previousPrefix && currentPrefix && previousPrefix === currentPrefix;
+        // Só reseta as cores se mudou para um grupo de artigos diferente
+        const isSameGroup = previousGroupId && currentGroupId && previousGroupId === currentGroupId;
         
-        // Só reseta as cores se mudou para um grupo de tinturaria diferente
-        if (!isSameDyeingGroup) {
+        if (!isSameGroup) {
           setColorEntries([{ colorId: '', quantity: '' }]);
         }
         setSpecialDiscount('');
         setResult(null);
       }
       
-      // Atualiza o código do produto anterior
-      setPreviousProductCode(currentCode);
+      // Atualiza o grupo do produto anterior
+      setPreviousGroupId(currentGroupId);
     } else {
       setProductColors([]);
       setProductYarns([]);
@@ -699,7 +691,8 @@ export const CostCalculator = () => {
         width_cm: quoteData.width_cm,
         yield_m_kg: quoteData.yield_m_kg,
         efficiency_factor: quoteData.efficiency_factor,
-        weaving_cost: quoteData.weaving_cost
+        weaving_cost: quoteData.weaving_cost,
+        group_id: (quoteData as any).group_id || null
       };
 
       const savedTinturaria: Tinturaria = {
