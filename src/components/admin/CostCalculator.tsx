@@ -156,8 +156,15 @@ export const CostCalculator = () => {
   const [loadedQuoteData, setLoadedQuoteData] = useState<SavedQuoteData | null>(null);
   const isLoadingQuoteRef = useRef(false); // Flag to prevent useEffect from resetting colors
   const [currentFreightPrice, setCurrentFreightPrice] = useState<number>(0);
+  const [previousProductCode, setPreviousProductCode] = useState<string>('');
   
   const { toast } = useToast();
+
+  // Extrai o prefixo do código do produto para determinar o grupo de tinturaria (ex: "001", "401")
+  const getDyeingGroupPrefix = (code: string): string => {
+    const match = code.match(/^(\d+)/);
+    return match ? match[1] : '';
+  };
 
   const fetchCurrentFreight = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -180,19 +187,34 @@ export const CostCalculator = () => {
 
   useEffect(() => {
     if (selectedTinturariaId && selectedProductId) {
+      const currentProduct = products.find(p => p.id === selectedProductId);
+      const currentCode = currentProduct?.code || '';
+      
       fetchProductColors(selectedTinturariaId, selectedProductId);
       fetchProductYarns(selectedProductId);
+      
       // Only reset color entries if NOT loading a quote
       if (!isLoadingQuoteRef.current) {
-        setColorEntries([{ colorId: '', quantity: '' }]);
+        // Verifica se o produto anterior e o atual pertencem ao mesmo grupo de tinturaria
+        const previousPrefix = getDyeingGroupPrefix(previousProductCode);
+        const currentPrefix = getDyeingGroupPrefix(currentCode);
+        const isSameDyeingGroup = previousPrefix && currentPrefix && previousPrefix === currentPrefix;
+        
+        // Só reseta as cores se mudou para um grupo de tinturaria diferente
+        if (!isSameDyeingGroup) {
+          setColorEntries([{ colorId: '', quantity: '' }]);
+        }
         setSpecialDiscount('');
         setResult(null);
       }
+      
+      // Atualiza o código do produto anterior
+      setPreviousProductCode(currentCode);
     } else {
       setProductColors([]);
       setProductYarns([]);
     }
-  }, [selectedTinturariaId, selectedProductId]);
+  }, [selectedTinturariaId, selectedProductId, products]);
 
   const fetchTinturarias = async () => {
     const { data, error } = await supabase
