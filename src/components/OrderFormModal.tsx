@@ -61,14 +61,7 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
     }
   }, [open]);
 
-  // Atualiza as cores quando o produto selecionado muda
-  useEffect(() => {
-    if (selectedProduct) {
-      fetchColorsForProductGroup(selectedProduct.group_id);
-    } else {
-      setColors([]);
-    }
-  }, [selectedProduct]);
+  // Removido - agora usamos fetchAllColors diretamente no useEffect abaixo
 
   const fetchProducts = async () => {
     const { data, error } = await supabase
@@ -84,62 +77,29 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
     setProducts(data || []);
   };
 
-  // Busca cores filtradas pelo grupo do produto selecionado
-  const fetchColorsForProductGroup = async (groupId: string | null) => {
-    if (!groupId) {
-      setColors([]);
-      return;
-    }
-
-    // Busca todos os produtos do mesmo grupo
-    const { data: groupProducts, error: groupError } = await supabase
-      .from("products")
-      .select("id")
-      .eq("group_id", groupId);
-
-    if (groupError || !groupProducts?.length) {
-      console.error("Error fetching group products:", groupError);
-      setColors([]);
-      return;
-    }
-
-    const productIds = groupProducts.map(p => p.id);
-
-    // Busca as cores que têm custo de tinturaria para qualquer produto do grupo
-    const { data: dyeingData, error: dyeingError } = await supabase
-      .from("dyeing_costs")
-      .select("color_id")
-      .in("product_id", productIds);
-
-    if (dyeingError) {
-      console.error("Error fetching dyeing costs:", dyeingError);
-      setColors([]);
-      return;
-    }
-
-    // IDs únicos de cores
-    const colorIds = [...new Set(dyeingData?.map(d => d.color_id) || [])];
-
-    if (colorIds.length === 0) {
-      setColors([]);
-      return;
-    }
-
-    // Busca os dados das cores
-    const { data: colorsData, error: colorsError } = await supabase
+  // Busca todas as cores disponíveis (para usuários não logados, RLS de dyeing_costs bloqueia)
+  // Então buscamos todas as cores e filtramos no frontend se possível
+  const fetchAllColors = async () => {
+    const { data, error } = await supabase
       .from("colors")
       .select("id, name")
-      .in("id", colorIds)
       .order("name");
 
-    if (colorsError) {
-      console.error("Error fetching colors:", colorsError);
-      setColors([]);
+    if (error) {
+      console.error("Error fetching colors:", error);
       return;
     }
-
-    setColors(colorsData || []);
+    setColors(data || []);
   };
+
+  // Atualiza as cores quando o produto é selecionado
+  useEffect(() => {
+    if (selectedProduct) {
+      fetchAllColors();
+    } else {
+      setColors([]);
+    }
+  }, [selectedProduct]);
 
   const handleAddColor = () => {
     if (!currentColorId || !currentQuantity) {
