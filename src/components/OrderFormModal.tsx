@@ -61,8 +61,6 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
     }
   }, [open]);
 
-  // Removido - agora usamos fetchAllColors diretamente no useEffect abaixo
-
   const fetchProducts = async () => {
     const { data, error } = await supabase
       .from("products")
@@ -77,25 +75,25 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
     setProducts(data || []);
   };
 
-  // Busca todas as cores disponíveis (para usuários não logados, RLS de dyeing_costs bloqueia)
-  // Então buscamos todas as cores e filtramos no frontend se possível
-  const fetchAllColors = async () => {
-    const { data, error } = await supabase
-      .from("colors")
-      .select("id, name")
-      .order("name");
+  const fetchColorsForSelectedProductGroup = async (productId: string) => {
+    const { data, error } = await supabase.functions.invoke("public-product-group-colors", {
+      body: { productId },
+    });
 
     if (error) {
-      console.error("Error fetching colors:", error);
+      console.error("Error fetching filtered colors:", error);
+      setColors([]);
       return;
     }
-    setColors(data || []);
+
+    const result = (data as { colors?: Color[] } | null) ?? null;
+    setColors(result?.colors || []);
   };
 
-  // Atualiza as cores quando o produto é selecionado
+  // Atualiza as cores quando o produto é selecionado (mesmo filtro da calculadora, sem custos)
   useEffect(() => {
     if (selectedProduct) {
-      fetchAllColors();
+      fetchColorsForSelectedProductGroup(selectedProduct.id);
     } else {
       setColors([]);
     }

@@ -1,1 +1,4 @@
 project_id = "btryhjudprfagillbarc"
+
+[functions.public-product-group-colors]
+verify_jwt = false
