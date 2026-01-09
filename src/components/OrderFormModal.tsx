@@ -81,17 +81,13 @@ export const OrderFormModal = ({ children }: OrderFormModalProps) => {
         body: { productId },
       });
 
-      console.log("Edge function response:", { data, error });
-
       if (error) {
         console.error("Error fetching filtered colors:", error);
         setColors([]);
         return;
       }
 
-      // O resultado pode estar diretamente em data ou em data.colors
-      const colorsArray = data?.colors || [];
-      console.log("Colors parsed:", colorsArray);
+      const colorsArray = (data as { colors?: Color[] } | null)?.colors ?? [];
       setColors(colorsArray);
     } catch (err) {
       console.error("Exception fetching colors:", err);
